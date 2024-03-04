@@ -40,6 +40,10 @@ class Main(QMainWindow):
         self.actionDecrease_Font_Size.triggered.connect(self.decreaseFontSize)
         self.actionSet_Dark_Mode.triggered.connect(self.setDarkMode)
         self.actionSet_Light_Mode.triggered.connect(self.setLightMode)
+        self.iconNew.triggered.connect(self.newFile)
+        self.iconOpen.triggered.connect(self.openFile)
+        self.iconClose.triggered.connect(self.closeFile)
+        self.iconSave.triggered.connect(self.saveFile)
 
         # Agrega el QPlainTextEdit para los números de línea
         self.lineNumberTextEdit = NoScrollTextEdit(self.centralwidget)

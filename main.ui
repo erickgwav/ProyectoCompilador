@@ -244,6 +244,9 @@
      <height>26</height>
     </rect>
    </property>
+   <property name="nativeMenuBar">
+    <bool>false</bool>
+   </property>
    <widget class="QMenu" name="menuFile">
     <property name="title">
      <string>File</string>
@@ -296,19 +299,53 @@
      <string>Semantico</string>
     </property>
    </widget>
-   <widget class="QMenu" name="menuCompilar">
+   <widget class="QMenu" name="iconNew">
     <property name="title">
      <string>Compilar</string>
     </property>
+    <property name="icon">
+     <iconset>
+      <normaloff>new.png</normaloff>new.png</iconset>
+    </property>
+   </widget>
+   <widget class="QMenu" name="iconOpen">
+    <property name="title">
+     <string>lol</string>
+    </property>
+    <property name="icon">
+     <iconset>
+      <normaloff>open.png</normaloff>open.png</iconset>
+    </property>
+   </widget>
+   <widget class="QMenu" name="iconClose">
+    <property name="title">
+     <string>Close</string>
+    </property>
+    <property name="icon">
+     <iconset>
+      <normaloff>close.png</normaloff>close.png</iconset>
+    </property>
+   </widget>
+   <widget class="QMenu" name="iconSave">
+    <property name="title">
+     <string>Save</string>
+    </property>
+    <property name="icon">
+     <iconset>
+      <normaloff>save.png</normaloff>save.png</iconset>
+    </property>
    </widget>
    <addaction name="menuFile"/>
+   <addaction name="iconNew"/>
+   <addaction name="iconOpen"/>
+   <addaction name="iconClose"/>
+   <addaction name="iconSave"/>
    <addaction name="menuEdit"/>
    <addaction name="menuBuild_and_Debug"/>
    <addaction name="menuAppearance"/>
    <addaction name="menuLexico"/>
    <addaction name="menuSintactico"/>
    <addaction name="menuSemantico"/>
-   <addaction name="menuCompilar"/>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
   <action name="actionNew">
