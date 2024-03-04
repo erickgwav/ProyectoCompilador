@@ -156,7 +156,7 @@
      </rect>
     </property>
     <property name="currentIndex">
-     <number>0</number>
+     <number>1</number>
     </property>
     <widget class="QWidget" name="tabErroresLex">
      <attribute name="title">
@@ -172,29 +172,6 @@
        </rect>
       </property>
      </widget>
-    </widget>
-    <widget class="QWidget" name="tabErroresSint">
-     <attribute name="title">
-      <string/>
-     </attribute>
-    </widget>
-    <widget class="QWidget" name="tabErroresSem">
-     <attribute name="title">
-      <string/>
-     </attribute>
-    </widget>
-    <widget class="QWidget" name="tabResultados">
-     <attribute name="title">
-      <string/>
-     </attribute>
-    </widget>
-    <widget class="QWidget" name="widget">
-     <property name="enabled">
-      <bool>false</bool>
-     </property>
-     <attribute name="title">
-      <string/>
-     </attribute>
     </widget>
    </widget>
   </widget>
