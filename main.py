@@ -1,5 +1,6 @@
 from PyQt6.QtCore import Qt, QStandardPaths
-from PyQt6.QtWidgets import QMainWindow, QApplication, QFileDialog, QTextEdit, QHBoxLayout, QVBoxLayout, QSizePolicy
+from PyQt6.QtGui import QTextOption
+from PyQt6.QtWidgets import QMainWindow, QApplication, QFileDialog, QTextEdit, QHBoxLayout, QVBoxLayout, QSizePolicy, QLabel, QGridLayout
 from PyQt6.uic import loadUi
 import sys
 
@@ -84,6 +85,26 @@ class Main(QMainWindow):
 
         # Deshabilita el scroll manual en lineNumberTextEdit
         self.lineNumberTextEdit.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+
+         # Contador de líneas
+        self.line_count_label = QLabel()
+        # Contador de columnas
+        self.column_count_label = QLabel()
+        # Contador de errores
+        self.error_count_label = QLabel()
+        # Crea el layout de la cuadrícula y agrega los contadores
+        grid_layout = QGridLayout()
+        grid_layout.addWidget(self.line_count_label, 0, 0)
+        grid_layout.addWidget(self.column_count_label, 0, 1)
+        grid_layout.addWidget(self.error_count_label, 0, 2)
+        layoutPrincipal.addLayout(grid_layout)
+        # Actualizar contador de líneas
+        self.textEdit.cursorPositionChanged.connect(self.update_cursor_position)
+
+        # Deshabilita el ajuste de palabras y habilita la barra de desplazamiento horizontal
+        self.textEdit.setWordWrapMode(QTextOption.WrapMode.NoWrap)
+        self.textEdit.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
+
 
     def syncScrollBars(self):
         # Obtiene el valor actual de la barra de desplazamiento vertical de textEdit
@@ -211,6 +232,24 @@ class Main(QMainWindow):
     # Modo claro
     def setLightMode(self):
         self.setStyleSheet("")
+
+    def update_counts(self):
+        text = self.textEdit.toPlainText()
+        line_count = text.count('\n') + 1  # Contar el número de líneas
+        column_count = len(text.split('\n')[-1])  # Contar el número de columnas en la última línea
+        # Actualizar los labels
+        self.line_count_label.setText(f"Líneas: {line_count}")
+        self.column_count_label.setText(f"Columnas: {column_count}")
+        # Simulación de errores (puedes modificar esta parte según tus necesidades)
+        error_count = text.count('error')  # Contar el número de veces que aparece la palabra 'error'
+        self.error_count_label.setText(f"Errores: {error_count}")
+
+    def update_cursor_position(self):
+        cursor = self.textEdit.textCursor()
+        line_number = cursor.blockNumber() + 1
+        column_number = cursor.columnNumber() + 1
+        self.line_count_label.setText(f"Línea: {line_number}")
+        self.column_count_label.setText(f"Columna: {column_number}")
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)

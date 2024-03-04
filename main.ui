@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>1709</width>
-    <height>834</height>
+    <height>881</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -152,11 +152,11 @@
       <x>10</x>
       <y>610</y>
       <width>1521</width>
-      <height>181</height>
+      <height>191</height>
      </rect>
     </property>
     <property name="currentIndex">
-     <number>1</number>
+     <number>0</number>
     </property>
     <widget class="QWidget" name="tabErroresLex">
      <attribute name="title">
@@ -168,7 +168,7 @@
         <x>10</x>
         <y>10</y>
         <width>1491</width>
-        <height>111</height>
+        <height>131</height>
        </rect>
       </property>
      </widget>
@@ -278,6 +278,11 @@
       <normaloff>save.png</normaloff>save.png</iconset>
     </property>
    </widget>
+   <widget class="QMenu" name="menuCompilar">
+    <property name="title">
+     <string>Compilar</string>
+    </property>
+   </widget>
    <addaction name="menuFile"/>
    <addaction name="menuEdit"/>
    <addaction name="menuBuild_and_Debug"/>
@@ -285,6 +290,7 @@
    <addaction name="menuLexico"/>
    <addaction name="menuSintactico"/>
    <addaction name="menuSemantico"/>
+   <addaction name="menuCompilar"/>
    <addaction name="iconNew"/>
    <addaction name="iconOpen"/>
    <addaction name="iconClose"/>
