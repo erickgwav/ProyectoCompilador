@@ -156,11 +156,11 @@
      </rect>
     </property>
     <property name="currentIndex">
-     <number>4</number>
+     <number>0</number>
     </property>
     <widget class="QWidget" name="tabErroresLex">
      <attribute name="title">
-      <string>Errores Léxicos</string>
+      <string>Errores</string>
      </attribute>
      <widget class="QTextEdit" name="textErroresLex">
       <property name="geometry">
@@ -175,63 +175,26 @@
     </widget>
     <widget class="QWidget" name="tabErroresSint">
      <attribute name="title">
-      <string>Errores Sintácticos</string>
+      <string/>
      </attribute>
-     <widget class="QTextEdit" name="textErroresSint">
-      <property name="geometry">
-       <rect>
-        <x>10</x>
-        <y>10</y>
-        <width>1491</width>
-        <height>111</height>
-       </rect>
-      </property>
-     </widget>
     </widget>
     <widget class="QWidget" name="tabErroresSem">
      <attribute name="title">
-      <string>Errores Semánticos</string>
+      <string/>
      </attribute>
-     <widget class="QTextEdit" name="textErroresSem">
-      <property name="geometry">
-       <rect>
-        <x>10</x>
-        <y>10</y>
-        <width>1491</width>
-        <height>111</height>
-       </rect>
-      </property>
-     </widget>
     </widget>
     <widget class="QWidget" name="tabResultados">
      <attribute name="title">
-      <string>Resultados</string>
+      <string/>
      </attribute>
-     <widget class="QTextEdit" name="textResultados">
-      <property name="geometry">
-       <rect>
-        <x>10</x>
-        <y>10</y>
-        <width>1491</width>
-        <height>111</height>
-       </rect>
-      </property>
-     </widget>
     </widget>
-    <widget class="QWidget" name="tabInterCode_2">
+    <widget class="QWidget" name="widget">
+     <property name="enabled">
+      <bool>false</bool>
+     </property>
      <attribute name="title">
-      <string>Codigo Intermedio</string>
+      <string/>
      </attribute>
-     <widget class="QTextEdit" name="textInterCode_2">
-      <property name="geometry">
-       <rect>
-        <x>10</x>
-        <y>10</y>
-        <width>1491</width>
-        <height>131</height>
-       </rect>
-      </property>
-     </widget>
     </widget>
    </widget>
   </widget>
@@ -300,6 +263,9 @@
     </property>
    </widget>
    <widget class="QMenu" name="iconNew">
+    <property name="toolTip">
+     <string>New File</string>
+    </property>
     <property name="title">
      <string>Compilar</string>
     </property>
@@ -336,16 +302,16 @@
     </property>
    </widget>
    <addaction name="menuFile"/>
-   <addaction name="iconNew"/>
-   <addaction name="iconOpen"/>
-   <addaction name="iconClose"/>
-   <addaction name="iconSave"/>
    <addaction name="menuEdit"/>
    <addaction name="menuBuild_and_Debug"/>
    <addaction name="menuAppearance"/>
    <addaction name="menuLexico"/>
    <addaction name="menuSintactico"/>
    <addaction name="menuSemantico"/>
+   <addaction name="iconNew"/>
+   <addaction name="iconOpen"/>
+   <addaction name="iconClose"/>
+   <addaction name="iconSave"/>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
   <action name="actionNew">
