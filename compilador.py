@@ -1,9 +1,10 @@
 from PyQt6.QtCore import Qt, QStandardPaths
-from PyQt6.QtGui import QTextOption, QTextCharFormat, QColor, QTextCursor
-from PyQt6.QtWidgets import QMainWindow, QApplication, QFileDialog, QTextEdit, QHBoxLayout, QVBoxLayout, QSizePolicy, QLabel, QGridLayout
-from PyQt6.uic import loadUi
+from PyQt6.QtGui import QTextOption, QIcon
+from PyQt6.QtWidgets import QMainWindow, QApplication, QFileDialog, QTextEdit, QHBoxLayout, QVBoxLayout, QSizePolicy, QLabel, QGridLayout, QWidget
+from PyQt6 import uic
 import sys
-import re
+import io
+import os
 
 class NoScrollTextEdit(QTextEdit):
     def __init__(self, parent=None):
@@ -13,60 +14,19 @@ class NoScrollTextEdit(QTextEdit):
         # Bloquea el evento de la rueda del mouse
         pass
 
-class LexicalAnalyzer:
-    def __init__(self):
-        # Patrones de expresiones regulares para los tokens
-        self.patterns = {
-            "entero": r"\b\d+\b",
-            "real": r"\b\d+\.\d+\b",
-            "identificador": r"\b[a-zA-Z_]\w*\b",
-            "operadores_aritmeticos": r"[\+\-\*/%^]",
-            "operadores_relacionales": r"(<=|>=|!=|==|<|>)",
-            "palabras_clave": r"\b(if|else|do|while|switch|case|integer|int|double|main|then|end|real|cin|cout)\b",
-            "comentario": r"°°.*?$",
-            "comentario_multilinea": r"°\*(.*?)\*°",
-        }
-
-        # Colores para resaltar los tokens
-        self.colors = {
-            "entero": QColor(45, 132, 214),
-            "real": QColor(45, 132, 214),           
-            "identificador": QColor(141, 22, 184), 
-            "operadores_aritmeticos": QColor(227, 9, 9),  
-            "operadores_relacionales": QColor(2, 179, 8),    
-            "palabras_clave": QColor(184, 22, 87),        
-            "comentario": QColor(189, 189, 189),  
-            "comentario_multilinea": QColor(189, 189, 189),          
-        }
-
-    def analyze(self, textEdit):
-        text = textEdit.toPlainText()
-        cursor = textEdit.textCursor()
-
-        # Iterar sobre los patrones y aplicar expresiones regulares
-        for token, pattern in self.patterns.items():
-            regex = re.compile(pattern, re.MULTILINE)
-            for match in regex.finditer(text):
-                start = match.start()
-                end = match.end()
-                self.apply_format(cursor, start, end, self.colors[token])
-
-    def apply_format(self, cursor, start, end, color):
-        format = QTextCharFormat()
-        format.setForeground(color)
-        cursor.setPosition(start)
-        cursor.movePosition(QTextCursor.MoveOperation.Right, QTextCursor.MoveMode.KeepAnchor, end - start)
-        cursor.setCharFormat(format)
-
 class Main(QMainWindow):
     def __init__(self):
         super(Main, self).__init__()
-        loadUi("main.ui", self) 
+
+        template = """ """
+
+        f = io.StringIO(template)
+        uic.loadUi(f, self)
 
         # Ruta actual del archivo
         self.current_path = None
         # Tamaño de la fuente
-        self.current_fontSize = 12
+        self.current_fontSize = 10
         # Titulo de la ventana
         self.setWindowTitle("Compilador")
         # Iniciar en pantalla completa
@@ -92,6 +52,16 @@ class Main(QMainWindow):
         self.iconClose.triggered.connect(self.closeFile)
         self.iconSave.triggered.connect(self.saveFile)
 
+        icon_path = os.path.join(os.path.dirname(__file__), 'images')
+        self.iconNew.setIcon(QIcon(os.path.join(icon_path, 'new.png')))
+        self.iconSave.setIcon(QIcon(os.path.join(icon_path, 'save.png')))
+        self.iconOpen.setIcon(QIcon(os.path.join(icon_path, 'open.png')))
+        self.iconClose.setIcon(QIcon(os.path.join(icon_path, 'close.png')))
+        self.actionNew.setIcon(QIcon(os.path.join(icon_path, 'new.png')))
+        self.actionSave.setIcon(QIcon(os.path.join(icon_path, 'save.png')))
+        self.actionOpen.setIcon(QIcon(os.path.join(icon_path, 'open.png')))
+        self.actionClose.setIcon(QIcon(os.path.join(icon_path, 'close.png')))
+
         # Agrega el QPlainTextEdit para los números de línea
         self.lineNumberTextEdit = NoScrollTextEdit(self.centralwidget)
         self.lineNumberTextEdit.setReadOnly(True)
@@ -110,8 +80,6 @@ class Main(QMainWindow):
         self.lineNumberTextEdit.setPlainText(line_numbers)
 
         layoutPrincipal = QVBoxLayout(self.centralwidget)
-                 # Aplicar tamaño de fuente por defecto
-        self.set_default_font_size()
 
         # Primer QHBoxLayout para lineNumberTextEdit, textEdit y tabWidget
         layoutArriba = QHBoxLayout()
@@ -134,7 +102,7 @@ class Main(QMainWindow):
         # Deshabilita el scroll manual en lineNumberTextEdit
         self.lineNumberTextEdit.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
 
-        # Contador de líneas
+         # Contador de líneas
         self.line_count_label = QLabel()
         # Contador de columnas
         self.column_count_label = QLabel()
@@ -153,30 +121,6 @@ class Main(QMainWindow):
         self.textEdit.setWordWrapMode(QTextOption.WrapMode.NoWrap)
         self.textEdit.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
 
-        # Instanciar el analizador léxico
-        self.lexical_analyzer = LexicalAnalyzer()
-
-        # Conectar el evento de cambio de texto al analizador léxico
-        self.textEdit.textChanged.connect(self.analyze_text)
-        self.last_text = ""
-
-    def analyze_text(self):
-        # Desconectar temporalmente el evento textChanged
-        self.textEdit.textChanged.disconnect(self.analyze_text)
-
-        # Limpiar el formato existente antes de aplicar uno nuevo
-        cursor = self.textEdit.textCursor()
-        cursor.select(QTextCursor.SelectionType.Document)
-        cursor.setCharFormat(QTextCharFormat())  # Borrar formato existente
-        cursor.clearSelection()
-
-        # Llamar al analizador léxico solo si el texto ha cambiado
-        if self.textEdit.toPlainText() != self.last_text:
-            self.last_text = self.textEdit.toPlainText()
-            self.lexical_analyzer.analyze(self.textEdit)
-
-        # Volver a conectar el evento textChanged
-        self.textEdit.textChanged.connect(self.analyze_text)
 
     def syncScrollBars(self):
         # Obtiene el valor actual de la barra de desplazamiento vertical de textEdit
@@ -305,6 +249,17 @@ class Main(QMainWindow):
     def setLightMode(self):
         self.setStyleSheet("")
 
+    def update_counts(self):
+        text = self.textEdit.toPlainText()
+        line_count = text.count('\n') + 1  # Contar el número de líneas
+        column_count = len(text.split('\n')[-1])  # Contar el número de columnas en la última línea
+        # Actualizar los labels
+        self.line_count_label.setText(f"Líneas: {line_count}")
+        self.column_count_label.setText(f"Columnas: {column_count}")
+        # Simulación de errores (puedes modificar esta parte según tus necesidades)
+        error_count = text.count('error')  # Contar el número de veces que aparece la palabra 'error'
+        self.error_count_label.setText(f"Errores: {error_count}")
+
     def update_cursor_position(self):
         cursor = self.textEdit.textCursor()
         line_number = cursor.blockNumber() + 1
@@ -312,20 +267,8 @@ class Main(QMainWindow):
         self.line_count_label.setText(f"Línea: {line_number}")
         self.column_count_label.setText(f"Columna: {column_number}")
 
-    def set_default_font_size(self):
-        # Establecer el tamaño de fuente por defecto para textEdit
-        font = self.textEdit.font()
-        font.setPointSize(self.current_fontSize)
-        self.textEdit.setFont(font)
-
-        # Establecer el tamaño de fuente por defecto para lineNumberTextEdit
-        font = self.lineNumberTextEdit.font()
-        font.setPointSize(self.current_fontSize)
-        self.lineNumberTextEdit.setFont(font)
-
 if __name__ == '__main__':
     app = QApplication(sys.argv)
     ui = Main()
     ui.show()
     sys.exit(app.exec())
-
