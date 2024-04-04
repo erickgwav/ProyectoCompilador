@@ -41,6 +41,10 @@ class LexicalAnalyzer:
             tok = lexer.token()
             if not tok:
                 break  # No hay más tokens
+
+            # Imprimir información del token en consola
+            print(f"Tipo: {tok.type}, Valor: {tok.value}, Línea: {tok.lineno}, Columna: {self.find_column(text, tok)}")
+
             start = tok.lexpos
             end = start + len(tok.value)
             # Aplicar formato solo si el tipo de token tiene un color definido
@@ -53,6 +57,10 @@ class LexicalAnalyzer:
         cursor.setPosition(start)
         cursor.movePosition(QTextCursor.MoveOperation.Right, QTextCursor.MoveMode.KeepAnchor, end - start)
         cursor.setCharFormat(format)
+
+    def find_column(self, text, token):
+        line_start = text.rfind('\n', 0, token.lexpos) + 1
+        return (token.lexpos - line_start) + 1
 
 class Main(QMainWindow):
     def __init__(self):

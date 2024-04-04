@@ -16,60 +16,54 @@ tokens = [
 ]
 
 # Definición de tokens
+
+def t_newline(t):
+    r'\n+'
+    t.lexer.lineno += len(t.value)  # Incrementar el contador de línea en función del número de saltos de línea
+    pass
+
 def t_REAL(t):
     r'\b\d+\.\d+\b'
-    print(f"Token REAL: Identificador='{t.type}', Valor='{t.value}', Línea='{t.lineno}', Columna='{t.lexpos + 1}'")
     return t
 
 def t_ENTERO(t):
     r'\b\d+\b'
-    print(f"Token ENTERO: Identificador='{t.type}', Valor='{t.value}', Línea='{t.lineno}', Columna='{t.lexpos + 1}'")
     return t
 
 def t_PALABRA_CLAVE(t):
     r'\b(if|else|do|while|switch|case|break|for|int|double|main|then|end|return|float|cin|cout)\b'
-    print(f"Token PALABRA_CLAVE: Identificador='{t.type}', Valor='{t.value}', Línea='{t.lineno}', Columna='{t.lexpos + 1}'")
     return t
 
 def t_OPERADOR_LOGICO(t):
     r'\b(and|or)\b'
-    print(f"Token OPERADOR_LOGICO: Identificador='{t.type}', Valor='{t.value}', Línea='{t.lineno}', Columna='{t.lexpos + 1}'")
     return t
 
 def t_IDENTIFICADOR(t):
     r'\b[a-zA-Z_]\w*\b'
-    print(f"Token IDENTIFICADOR: Identificador='{t.type}', Valor='{t.value}', Línea='{t.lineno}', Columna='{t.lexpos + 1}'")
     return t
 
 def t_OPERADOR_ARITMETICO(t):
     r'[\+\-\*/%^]'
-    print(f"Token OPERADOR_ARITMETICO: Identificador='{t.type}', Valor='{t.value}', Línea='{t.lineno}', Columna='{t.lexpos + 1}'")
     return t
 
 def t_OPERADOR_RELACIONAL(t):
     r'(<=|>=|!=|==|<|>)'
-    print(f"Token OPERADOR_RELACIONAL: Identificador='{t.type}', Valor='{t.value}', Línea='{t.lineno}', Columna='{t.lexpos + 1}'")
     return t
 
 def t_SIMBOLO(t):
     r'[\{\}\(\),;]'
-    print(f"Token SIMBOLO: Identificador='{t.type}', Valor='{t.value}', Línea='{t.lineno}', Columna='{t.lexpos + 1}'")
     return t
 
 def t_ASIGNACION(t):
     r'='
-    print(f"Token ASIGNACION: Identificador='{t.type}', Valor='{t.value}', Línea='{t.lineno}', Columna='{t.lexpos + 1}'")
     return t
 
 def t_COMENTARIO(t):
     r'°°.*'
-    print(f"Token COMENTARIO: Identificador='{t.type}', Valor='{t.value}', Línea='{t.lineno}', Columna='{t.lexpos + 1}'")
     return t
 
 def t_COMENTARIO_MULTILINEA(t):
     r'°\*(.|\n)*?\*°'
-    t.lexer.lineno += t.value.count('\n')  # Contar líneas en comentarios multilínea
-    print(f"Token COMENTARIO_MULTILINEA: Identificador='{t.type}', Valor='{t.value}', Línea='{t.lineno}', Columna='{t.lexpos + 1}'")
     return t
 
 def t_error(t):

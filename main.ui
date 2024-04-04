@@ -83,6 +83,9 @@
         <height>521</height>
        </rect>
       </property>
+      <property name="readOnly">
+            <bool>true</bool>
+        </property>
      </widget>
     </widget>
     <widget class="QWidget" name="tabSintactico">
@@ -98,6 +101,9 @@
         <height>531</height>
        </rect>
       </property>
+      <property name="readOnly">
+            <bool>true</bool>
+        </property>
      </widget>
     </widget>
     <widget class="QWidget" name="tabSemantico">
@@ -113,6 +119,9 @@
         <height>531</height>
        </rect>
       </property>
+      <property name="readOnly">
+            <bool>true</bool>
+        </property>
      </widget>
     </widget>
     <widget class="QWidget" name="tabHashTable">
@@ -171,6 +180,9 @@
         <height>131</height>
        </rect>
       </property>
+      <property name="readOnly">
+            <bool>true</bool>
+        </property>
      </widget>
     </widget>
    </widget>
