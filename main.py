@@ -2,7 +2,6 @@ from PyQt6.QtCore import Qt, QStandardPaths
 from PyQt6.QtGui import QTextOption, QTextCharFormat, QColor, QTextCursor
 from PyQt6.QtWidgets import QMainWindow, QApplication, QFileDialog, QTextEdit, QHBoxLayout, QVBoxLayout, QSizePolicy, QLabel, QGridLayout
 from PyQt6.uic import loadUi
-from lexer import lexer
 import sys
 import re
 
@@ -16,40 +15,41 @@ class NoScrollTextEdit(QTextEdit):
 
 class LexicalAnalyzer:
     def __init__(self):
+        # Patrones de expresiones regulares para los tokens
+        self.patterns = {
+            "entero": r"\b\d+\b",
+            "real": r"\b\d+\.\d+\b",
+            "identificador": r"\b[a-zA-Z_]\w*\b",
+            "operadores_aritmeticos": r"[\+\-\*/%^]",
+            "operadores_relacionales": r"(<=|>=|!=|==|<|>)",
+            "palabras_clave": r"\b(if|else|do|while|switch|case|integer|int|double|main|then|end|real|cin|cout)\b",
+            "comentario": r"°°.*?$",
+            "comentario_multilinea": r"°\*(.*?)\*°",
+        }
+
         # Colores para resaltar los tokens
         self.colors = {
-            "ENTERO": QColor(45, 132, 214),
-            "REAL": QColor(45, 132, 214),
-            "IDENTIFICADOR": QColor(141, 22, 184),
-            "OPERADOR_ARITMETICO": QColor(227, 9, 9),
-            "OPERADOR_RELACIONAL": QColor(2, 179, 8),
-            "PALABRA_CLAVE": QColor(184, 22, 87),
-            "OPERADOR_LOGICO": QColor(184, 22, 87),
-            "COMENTARIO": QColor(189, 189, 189),
-            "COMENTARIO_MULTILINEA": QColor(189, 189, 189),
+            "entero": QColor(45, 132, 214),
+            "real": QColor(45, 132, 214),           
+            "identificador": QColor(141, 22, 184), 
+            "operadores_aritmeticos": QColor(227, 9, 9),  
+            "operadores_relacionales": QColor(2, 179, 8),    
+            "palabras_clave": QColor(184, 22, 87),        
+            "comentario": QColor(189, 189, 189),  
+            "comentario_multilinea": QColor(189, 189, 189),          
         }
 
     def analyze(self, textEdit):
         text = textEdit.toPlainText()
         cursor = textEdit.textCursor()
-        
-        # Reiniciar el lexer
-        lexer.input(text)
 
-        # Obtener el siguiente token
-        while True:
-            tok = lexer.token()
-            if not tok:
-                break  # No hay más tokens
-
-            # Imprimir información del token en consola
-            print(f"Tipo: {tok.type}, Valor: {tok.value}, Línea: {tok.lineno}, Columna: {self.find_column(text, tok)}")
-
-            start = tok.lexpos
-            end = start + len(tok.value)
-            # Aplicar formato solo si el tipo de token tiene un color definido
-            if tok.type in self.colors:
-                self.apply_format(cursor, start, end, self.colors[tok.type])
+        # Iterar sobre los patrones y aplicar expresiones regulares
+        for token, pattern in self.patterns.items():
+            regex = re.compile(pattern, re.MULTILINE)
+            for match in regex.finditer(text):
+                start = match.start()
+                end = match.end()
+                self.apply_format(cursor, start, end, self.colors[token])
 
     def apply_format(self, cursor, start, end, color):
         format = QTextCharFormat()
