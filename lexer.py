@@ -20,7 +20,7 @@ tokens = [
 def t_newline(t):
     r'\n+'
     t.lexer.lineno += len(t.value)  # Incrementar el contador de línea en función del número de saltos de línea
-    pass
+    t.lexer.lexpos = 0
 
 def t_REAL(t):
     r'\b\d+\.\d+\b'
@@ -68,7 +68,7 @@ def t_COMENTARIO_MULTILINEA(t):
     return t
 
 def t_error(t):
-    print(f"Illegal character '{t.value[0]}'")
+    print(f"ERROR. Caracter desconocido: '{t.value[0]}'")
     t.lexer.skip(1)
 
 

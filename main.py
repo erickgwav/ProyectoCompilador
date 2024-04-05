@@ -40,9 +40,13 @@ class LexicalAnalyzer:
             tok = lexer.token()
             if not tok:
                 break  # No hay más tokens
+
+            # Obtener la posición del cursor para calcular la columna del token
+            cursor.setPosition(tok.lexpos)
+            line_number = cursor.blockNumber() + 1
                 
             # Imprimir información del token en consola
-            print(f"Tipo: {tok.type}, Valor: {tok.value}, Línea: {tok.lineno}, Columna: {self.find_column(text, tok)}")
+            print(f"Tipo: {tok.type}, Valor: {tok.value}, Línea: {line_number}, Columna: {self.find_column(text, tok)}")
 
             start = tok.lexpos
             end = start + len(tok.value)
