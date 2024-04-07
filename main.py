@@ -28,12 +28,20 @@ class LexicalAnalyzer:
             "COMENTARIO_MULTILINEA": QColor(189, 189, 189),
         }
 
-    def analyze(self, textEdit):
+    def analyze(self, textEdit, outputTextEdit):
         text = textEdit.toPlainText()
         cursor = textEdit.textCursor()
 
+        outputTextEdit.clear()
+
         # Reiniciar el lexer
         lexer.input(text)
+
+        # Obtener el ancho total del QTextEdit
+        total_width = outputTextEdit.viewport().width()
+
+         # Construir la tabla HTML
+        html_table = "<table style='border-collapse: collapse; width: 500px;'><tr><th style='padding: 8px 50px;'>Tipo</th><th style='padding: 8px;'>Valor</th><th style='padding: 8px;'>Línea</th><th style='padding: 8px;'>Columna</th></tr>"
 
         # Obtener el siguiente token
         while True:
@@ -45,14 +53,21 @@ class LexicalAnalyzer:
             cursor.setPosition(tok.lexpos)
             line_number = cursor.blockNumber() + 1
                 
-            # Imprimir información del token en consola
-            print(f"Tipo: {tok.type}, Valor: {tok.value}, Línea: {line_number}, Columna: {self.find_column(text, tok)}")
-
+            # Construir una fila de la tabla para el token actual
+            html_row = f"<tr><td style='text-align: center'>{tok.type}</td><td style='text-align: center'>{tok.value}</td><td style='text-align: center'>{line_number}</td><td style='text-align: center'>{self.find_column(text, tok)}</td></tr>"
+            html_table += html_row
+            
             start = tok.lexpos
             end = start + len(tok.value)
             # Aplicar formato solo si el tipo de token tiene un color definido
             if tok.type in self.colors:
                 self.apply_format(cursor, start, end, self.colors[tok.type])
+
+         # Cerrar la tabla
+        html_table += "</table>"
+
+        # Insertar la tabla HTML en el QTextEdit
+        outputTextEdit.setHtml(html_table)
 
     def apply_format(self, cursor, start, end, color):
         format = QTextCharFormat()
@@ -182,7 +197,7 @@ class Main(QMainWindow):
         # Llamar al analizador léxico solo si el texto ha cambiado
         if self.textEdit.toPlainText() != self.last_text:
             self.last_text = self.textEdit.toPlainText()
-            self.lexical_analyzer.analyze(self.textEdit)
+            self.lexical_analyzer.analyze(self.textEdit, self.textLexico)
 
         # Volver a conectar el evento textChanged
         self.textEdit.textChanged.connect(self.analyze_text)

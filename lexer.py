@@ -68,7 +68,22 @@ def t_COMENTARIO_MULTILINEA(t):
     return t
 
 def t_error(t):
-    print(f"ERROR. Caracter desconocido: '{t.value[0]}'")
+    # Obtener la posición del token incorrecto
+    position = t.lexpos
+    
+    # Contar el número de saltos de línea antes de la posición actual
+    line_number = t.lexer.lexdata.count('\n', 0, position) + 1
+    
+    # Calcular la columna contando los caracteres desde el último salto de línea hasta la posición actual
+    last_line_start = t.lexer.lexdata.rfind('\n', 0, position)
+    if last_line_start < 0:
+        last_line_start = 0
+    column_number = position - last_line_start
+    
+    # Imprimir el error con el número de línea y columna
+    print(f"Error en la línea {line_number}, columna {column_number}: Caracter inesperado '{t.value[0]}'")
+    
+    # Saltar al siguiente carácter para continuar el análisis
     t.lexer.skip(1)
 
 
