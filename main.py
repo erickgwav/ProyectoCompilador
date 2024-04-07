@@ -41,7 +41,7 @@ class LexicalAnalyzer:
         total_width = outputTextEdit.viewport().width()
 
          # Construir la tabla HTML
-        html_table = "<table style='border-collapse: collapse; width: 500px;'><tr><th style='padding: 8px 50px;'>Tipo</th><th style='padding: 8px;'>Valor</th><th style='padding: 8px;'>Línea</th><th style='padding: 8px;'>Columna</th></tr>"
+        html_table = "<table style='border-collapse: collapse;' width='100%'><tr style='color: #1155d4; font-size: 15px'><th style='padding: 8px;'>Tipo</th><th style='padding: 8px;'>Valor</th><th style='padding: 8px;'>Línea</th><th style='padding: 8px;'>Columna</th></tr>"
 
         # Obtener el siguiente token
         while True:
@@ -54,7 +54,7 @@ class LexicalAnalyzer:
             line_number = cursor.blockNumber() + 1
                 
             # Construir una fila de la tabla para el token actual
-            html_row = f"<tr><td style='text-align: center'>{tok.type}</td><td style='text-align: center'>{tok.value}</td><td style='text-align: center'>{line_number}</td><td style='text-align: center'>{self.find_column(text, tok)}</td></tr>"
+            html_row = f"<tr><td style='text-align: center; padding: 5px; font-weight: bold;'>{tok.type}</td><td style='text-align: center; padding: 5px; font-weight: bold; color: #c4213f;'>{tok.value}</td><td style='text-align: center; padding: 5px;'>{line_number}</td><td style='text-align: center; padding: 5px;'>{self.find_column(text, tok)}</td></tr>"
             html_table += html_row
             
             start = tok.lexpos

@@ -171,7 +171,7 @@
      <attribute name="title">
       <string>Errores</string>
      </attribute>
-     <widget class="QTextEdit" name="textErroresLex">
+     <widget class="QTextEdit" name="textErrores">
       <property name="geometry">
        <rect>
         <x>10</x>
