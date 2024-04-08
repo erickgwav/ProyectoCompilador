@@ -15,8 +15,9 @@ tokens = [
     'COMENTARIO_MULTILINEA',
 ]
 
-# Definición de tokens
+errores = []
 
+# Definición de tokens
 def t_newline(t):
     r'\n+'
     t.lexer.lineno += len(t.value)  # Incrementar el contador de línea en función del número de saltos de línea
@@ -81,7 +82,7 @@ def t_error(t):
     column_number = position - last_line_start
     
     # Imprimir el error con el número de línea y columna
-    print(f"Error en la línea {line_number}, columna {column_number}: Caracter inesperado '{t.value[0]}'")
+    errores.append(f"Error en la línea {line_number}, columna {column_number}: Caracter inesperado '{t.value[0]}'")
     
     # Saltar al siguiente carácter para continuar el análisis
     t.lexer.skip(1)

@@ -1,8 +1,8 @@
 from PyQt6.QtCore import Qt, QStandardPaths
-from PyQt6.QtGui import QTextOption, QTextCharFormat, QColor, QTextCursor
+from PyQt6.QtGui import QTextOption, QTextCharFormat, QColor, QTextCursor, QPalette
 from PyQt6.QtWidgets import QMainWindow, QApplication, QFileDialog, QTextEdit, QHBoxLayout, QVBoxLayout, QSizePolicy, QLabel, QGridLayout
 from PyQt6.uic import loadUi
-from lexer import lexer
+from lexer import lexer, errores
 import sys
 import re
 
@@ -93,6 +93,8 @@ class Main(QMainWindow):
         self.setWindowTitle("Compilador")
         # Iniciar en pantalla completa
         self.showMaximized() 
+         # Lista para mantener un seguimiento de los errores ya mostrados
+        self.displayed_errors = set()
 
         # Se conectan las opciones del menú con las funciones
         self.actionNew.triggered.connect(self.newFile)
@@ -184,6 +186,15 @@ class Main(QMainWindow):
         self.textEdit.textChanged.connect(self.analyze_text)
         self.last_text = ""
 
+                # Obtener la paleta actual del QTextEdit
+        palette = self.textErrores.palette()
+
+        # Establecer el color del texto en rojo
+        palette.setColor(QPalette.ColorRole.Text, QColor("red"))
+
+        # Aplicar la paleta actualizada al QTextEdit
+        self.textErrores.setPalette(palette)
+
     def analyze_text(self):
         # Desconectar temporalmente el evento textChanged
         self.textEdit.textChanged.disconnect(self.analyze_text)
@@ -199,6 +210,15 @@ class Main(QMainWindow):
             self.last_text = self.textEdit.toPlainText()
             self.lexical_analyzer.analyze(self.textEdit, self.textLexico)
 
+            # Mostrar errores en textErrores
+            for error in errores:
+                if error not in self.displayed_errors:
+                    self.textErrores.insertPlainText(error)
+                    self.textErrores.insertPlainText("\n")  # Agregar una línea en blanco entre cada error
+                    self.displayed_errors.add(error)
+
+            # Limpiar la lista de errores
+            errores.clear()
         # Volver a conectar el evento textChanged
         self.textEdit.textChanged.connect(self.analyze_text)
 
