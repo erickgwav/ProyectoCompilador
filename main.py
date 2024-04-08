@@ -32,13 +32,11 @@ class LexicalAnalyzer:
         text = textEdit.toPlainText()
         cursor = textEdit.textCursor()
 
-        outputTextEdit.clear()
+        # Guardar la posición actual de la barra de desplazamiento
+        scroll_bar_value = outputTextEdit.verticalScrollBar().value()
 
         # Reiniciar el lexer
         lexer.input(text)
-
-        # Obtener el ancho total del QTextEdit
-        total_width = outputTextEdit.viewport().width()
 
          # Construir la tabla HTML
         html_table = "<table style='border-collapse: collapse;' width='100%'><tr style='color: #1155d4; font-size: 15px'><th style='padding: 8px;'>Tipo</th><th style='padding: 8px;'>Valor</th><th style='padding: 8px;'>Línea</th><th style='padding: 8px;'>Columna</th></tr>"
@@ -66,8 +64,22 @@ class LexicalAnalyzer:
          # Cerrar la tabla
         html_table += "</table>"
 
+        # Guardar la posición del cursor antes de cambiar el contenido
+        cursor_position = outputTextEdit.textCursor().position()
+
         # Insertar la tabla HTML en el QTextEdit
         outputTextEdit.setHtml(html_table)
+
+        # Restaurar la posición del cursor después de cambiar el contenido
+        cursor = outputTextEdit.textCursor()
+        cursor.setPosition(cursor_position)
+        outputTextEdit.setTextCursor(cursor)
+
+        # Restaurar la posición de la barra de desplazamiento
+        outputTextEdit.verticalScrollBar().setValue(scroll_bar_value)
+
+        outputTextEdit.adjustSize()
+        outputTextEdit.setMinimumSize(711, 450)
 
     def apply_format(self, cursor, start, end, color):
         format = QTextCharFormat()
