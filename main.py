@@ -51,9 +51,10 @@ class LexicalAnalyzer:
             cursor.setPosition(tok.lexpos)
             line_number = cursor.blockNumber() + 1
                 
-            # Construir una fila de la tabla para el token actual
-            html_row = f"<tr><td style='text-align: center; padding: 5px; font-weight: bold;'>{tok.type}</td><td style='text-align: center; padding: 5px; font-weight: bold; color: #c4213f;'>{tok.value}</td><td style='text-align: center; padding: 5px;'>{line_number}</td><td style='text-align: center; padding: 5px;'>{self.find_column(text, tok)}</td></tr>"
-            html_table += html_row
+            if(tok.type != 'COMENTARIO' and tok.type != 'COMENTARIO_MULTILINEA'):
+                # Construir una fila de la tabla para el token actual
+                html_row = f"<tr><td style='text-align: center; padding: 5px; font-weight: bold;'>{tok.type}</td><td style='text-align: center; padding: 5px; font-weight: bold; color: #c4213f;'>{tok.value}</td><td style='text-align: center; padding: 5px;'>{line_number}</td><td style='text-align: center; padding: 5px;'>{self.find_column(text, tok)}</td></tr>"
+                html_table += html_row
             
             start = tok.lexpos
             end = start + len(tok.value)
@@ -244,6 +245,7 @@ class Main(QMainWindow):
     # Crear nuevo archivo
     def newFile(self):
         self.textEdit.clear()
+        self.textErrores.clear()
         self.textEdit.setReadOnly(False)
         self.setWindowTitle("Untitled")
         self.current_path = None
@@ -272,6 +274,7 @@ class Main(QMainWindow):
     # Abrir un archivo
     def openFile(self):
         try:
+            self.textErrores.clear()
             self.textEdit.setReadOnly(False)
             documents_folder = QStandardPaths.writableLocation(QStandardPaths.StandardLocation.DocumentsLocation)
             fname = QFileDialog.getOpenFileName(self, 'Open File', documents_folder, 'Text files (*.txt)')
@@ -286,6 +289,7 @@ class Main(QMainWindow):
     # Cerrar el archivo
     def closeFile(self):
         self.textEdit.clear()
+        self.textErrores.clear()
         self.setWindowTitle("Compilador")
 
     # Ctrl Z

@@ -44,8 +44,14 @@ def t_IDENTIFICADOR(t):
     return t
 
 def t_OPERADOR_ARITMETICO(t):
-    r'[\+\-\*/%^]'
-    return t
+    r'[\+\-\*/%^]+'
+    if len(set(t.value)) > 1:
+        errores.append(f"Error en la línea {t.lineno}: Operadores aritméticos incompatibles '{t.value}'")
+    elif len(t.value) > 2:
+        errores.append(f"Error en la línea {t.lineno}: Repetición de operadores '{t.value}' mayor a 2")
+    else:
+        return t
+
 
 def t_OPERADOR_RELACIONAL(t):
     r'(<=|>=|!=|==|<|>)'
