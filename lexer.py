@@ -24,8 +24,16 @@ def t_newline(t):
     t.lexer.lexpos = 0
 
 def t_REAL(t):
-    r'\b\d+\.\d+\b'
-    return t
+    r'\b\d+\.\d+\b|\b\d+\.\b|\b\.\d+\b'
+    if '.' in t.value:
+        parts = t.value.split('.')
+        # Si hay más de dos partes después de dividir por el punto, o si alguna parte no es un dígito, es un error
+        if len(parts) > 2 or not all(part.isdigit() for part in parts):
+            errores.append(f"Error en la línea {t.lineno}: Número real mal formado en '{t.value}'")
+        else:
+            return t
+    else:
+        return t
 
 def t_ENTERO(t):
     r'\b\d+\b'
@@ -44,13 +52,12 @@ def t_IDENTIFICADOR(t):
     return t
 
 def t_OPERADOR_ARITMETICO(t):
-    r'[\+\-\*/%^]+'
-    if len(set(t.value)) > 1:
+    r'(\+\+|--|[\+\-\*/%^])'  # Patrón para identificar ++, -- y cualquier otro operador aritmético
+    if len(t.value) > 2:  # Si la longitud del token es mayor a 2, es un error
         errores.append(f"Error en la línea {t.lineno}: Operadores aritméticos incompatibles '{t.value}'")
-    elif len(t.value) > 2:
-        errores.append(f"Error en la línea {t.lineno}: Repetición de operadores '{t.value}' mayor a 2")
     else:
         return t
+
 
 
 def t_OPERADOR_RELACIONAL(t):
