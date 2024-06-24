@@ -24,7 +24,7 @@ def t_newline(t):
     t.lexer.lexpos = 0
 
 def t_REAL(t):
-    r'\b\d+\.\d+\b|\b\d+\.\b|\b\.\d+\b'
+    r'\b\d+\.\d+\b|\b\d+\.\b'
     if '.' in t.value:
         parts = t.value.split('.')
         # Si hay más de dos partes después de dividir por el punto, o si alguna parte no es un dígito, es un error
@@ -34,6 +34,12 @@ def t_REAL(t):
             return t
     else:
         return t
+    
+def t_NOTREAL(t):
+    r'\b\d+\.\D'
+    errores.append(f"Error en la línea {t.lineno}: Número real mal formado en '{t.value}'")
+    t.lexer.lexpos -= 1
+    t.lexer.skip(1)
 
 def t_ENTERO(t):
     r'\b\d+\b'
@@ -57,8 +63,6 @@ def t_OPERADOR_ARITMETICO(t):
         errores.append(f"Error en la línea {t.lineno}: Operadores aritméticos incompatibles '{t.value}'")
     else:
         return t
-
-
 
 def t_OPERADOR_RELACIONAL(t):
     r'(<=|>=|!=|==|<|>)'
