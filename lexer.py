@@ -1,112 +1,152 @@
 import ply.lex as lex
 
-# Lista de tokens
+reserved = {
+    'if': 'IF',
+    'else': 'ELSE',
+    'do': 'DO',
+    'then': 'THEN',
+    'end': 'END',
+    'switch': 'SWITCH',
+    'case': 'CASE',
+    'int': 'INT',
+    'double': 'DOUBLE',
+    'main': 'MAIN',
+    'cin': 'CIN',
+    'cout': 'COUT',
+    'while': 'WHILE',
+    'until': 'UNTIL',
+    'and': 'AND',
+    'or': 'OR'
+}
+
 tokens = [
-    'ENTERO',
-    'REAL',
-    'PALABRA_CLAVE',
-    'IDENTIFICADOR',
-    'OPERADOR_ARITMETICO',
-    'OPERADOR_RELACIONAL',
-    'OPERADOR_LOGICO',  
-    'SIMBOLO',          
-    'ASIGNACION',
     'COMENTARIO',
-    'COMENTARIO_MULTILINEA',
-]
+    'IDENTIFICADOR',
+    'DOUBLE',
+    'INT',
+    'SHAFT',
+    'COMMA',
+    'UNDERSCORE',
+    'NOT',
+    'LPARENT',
+    'RPARENT',
+    'LBRACE',
+    'RBRACE',
+    'LBRACKET',
+    'RBRACKET',
+    'PIPE',
+    'INC',
+    'DEC',
+    'SUMA',
+    'RESTA',
+    'DIVIDE',
+    'MULT',
+    'MOD',
+    'POT',
+    'ASSIGN',
+    'MORETHAN',
+    'LESSTHAN',
+    'MOREEQUALS',
+    'LESSEQUALS',
+    'EQUALS',
+    'NOTEQUALS',
+    'AND',
+    'OR',
+    'SEMICOLON'
+] + list(reserved.values())
 
-errores = []
+states = (
+    ('double','exclusive'),
+    ('deletedot','exclusive'),
+)
 
-# Definición de tokens
-def t_newline(t):
-    r'\n+'
-    t.lexer.lineno += len(t.value)  # Incrementar el contador de línea en función del número de saltos de línea
-    t.lexer.lexpos = 0
+t_SHAFT = r'°'
+t_COMMA = r','
+t_UNDERSCORE = r'_'
+t_NOT = r'!'
+t_LPARENT = r'\('
+t_RPARENT = r'\)'
+t_LBRACE = r'\{'
+t_RBRACE = r'\}'
+t_LBRACKET = r'\['
+t_RBRACKET = r'\]'
+t_PIPE = r'\|'
+t_INC = r'\+\+'
+t_DEC = r'--'
+t_SUMA = r'\+'
+t_RESTA = r'-'
+t_DIVIDE = r'/'
+t_MULT = r'\*'
+t_MOD = r'%'
+t_POT = r'\^'
+t_ASSIGN = r'='
+t_MORETHAN = r'>'
+t_LESSTHAN = r'<'
+t_MOREEQUALS = r'>='
+t_LESSEQUALS = r'<='
+t_EQUALS = r'=='
+t_NOTEQUALS = r'!='
+t_AND = r'and'
+t_OR = r'or'
+t_SEMICOLON = r';'
 
-def t_REAL(t):
-    r'\b\d+\.\d+\b|\b\d+\.\b'
-    if '.' in t.value:
-        parts = t.value.split('.')
-        # Si hay más de dos partes después de dividir por el punto, o si alguna parte no es un dígito, es un error
-        if len(parts) > 2 or not all(part.isdigit() for part in parts):
-            errores.append(f"Error en la línea {t.lineno}: Número real mal formado en '{t.value}'")
-        else:
-            return t
-    else:
-        return t
-    
-def t_NOTREAL(t):
-    r'\b\d+\.\D'
-    errores.append(f"Error en la línea {t.lineno}: Número real mal formado en '{t.value}'")
-    t.lexer.lexpos -= 1
-    t.lexer.skip(1)
-
-def t_ENTERO(t):
-    r'\b\d+\b'
-    return t
-
-def t_PALABRA_CLAVE(t):
-    r'\b(if|else|do|while|switch|case|break|for|int|double|main|then|end|return|float|cin|cout)\b'
-    return t
-
-def t_OPERADOR_LOGICO(t):
-    r'\b(and|or)\b'
+def t_COMENTARIO(t):
+    r'(\°\*(.|\n)*?\*\°)|(\°.*)'
+    pass
     return t
 
 def t_IDENTIFICADOR(t):
-    r'\b[a-zA-Z_]\w*\b'
+    r'[a-zA-Z_][a-zA-Z_0-9]*'
+    t.type = reserved.get(t.value,'IDENTIFICADOR')
     return t
 
-def t_OPERADOR_ARITMETICO(t):
-    r'(\+\+|--|[\+\-\*/%^])'  # Patrón para identificar ++, -- y cualquier otro operador aritmético
-    if len(t.value) > 2:  # Si la longitud del token es mayor a 2, es un error
-        errores.append(f"Error en la línea {t.lineno}: Operadores aritméticos incompatibles '{t.value}'")
-    else:
-        return t
+def t_double(t):
+    r'-?\d+\.'
+    t.lexer.code_start = t.lexer.lexpos  - len(t.value)
+    t.lexer.begin('double')
 
-def t_OPERADOR_RELACIONAL(t):
-    r'(<=|>=|!=|==|<|>)'
+def t_double_isdouble(t):
+    r'\d+'
+    #t.value = float(t.value)
+    t.value = t.lexer.lexdata[t.lexer.code_start:t.lexer.lexpos]
+    t.type = "DOUBLE"
+    t.lexpos = t.lexer.code_start
+    t.lexer.begin('INITIAL')
     return t
 
-def t_SIMBOLO(t):
-    r'[\{\}\(\),;]'
+def t_double_error(t):
+    print("Ilegal character at '%s' in line %d column %d" % (t.value[0], t.lexer.lineno, t.lexer.lexpos + 1))
+    print(t.type)
+    t.lexer.skip(-1)
+    t.value = "Ilegal character at '%s' in line %d column %d" % (t.value[0], t.lexer.lineno, t.lexer.lexpos + 1)
+    t.lexer.begin('deletedot')
     return t
 
-def t_ASIGNACION(t):
-    r'='
+def t_deletedot_delete(t):
+    r'\.'
+    pass
+    t.lexer.begin('INITIAL')
+
+def t_INT(t):
+    r'-?\d+'
+    #print(t.value)
     return t
 
-def t_COMENTARIO(t):
-    r'°°.*'
-    return t
-
-def t_COMENTARIO_MULTILINEA(t):
-    r'°\*(.|\n)*?\*°'
-    t.lexer.lineno += t.value.count('\n')  # Contar líneas en comentarios multilínea
-    return t
+def t_newline(t):
+    r'\n+'
+    t.lexer.lineno += 1
 
 def t_error(t):
-    # Obtener la posición del token incorrecto
-    position = t.lexpos
-    
-    # Contar el número de saltos de línea antes de la posición actual
-    line_number = t.lexer.lexdata.count('\n', 0, position) + 1
-    
-    # Calcular la columna contando los caracteres desde el último salto de línea hasta la posición actual
-    last_line_start = t.lexer.lexdata.rfind('\n', 0, position)
-    if last_line_start < 0:
-        last_line_start = 0
-    column_number = position - last_line_start
-    
-    # Imprimir el error con el número de línea y columna
-    errores.append(f"Error en la línea {line_number}, columna {column_number}: Caracter inesperado '{t.value[0]}'")
-    
-    # Saltar al siguiente carácter para continuar el análisis
+    print("Ilegal character at '%s' in line %d column %d" % (t.value[0], t.lexer.lineno, t.lexer.lexpos + 1))
+    print(t.type)
     t.lexer.skip(1)
+    t.value = "Ilegal character at '%s' in line %d column %d" % (t.value[0], t.lexer.lineno, t.lexer.lexpos + 1)
+    return t
 
+def t_eof(t):
+    t.lexer.lineno = 1
+    pass
 
-# Ignorar espacios en blanco y saltos de línea
-t_ignore = ' \t\n'
+t_ignore = " \t"
 
-# Construir el lexer
 lexer = lex.lex()

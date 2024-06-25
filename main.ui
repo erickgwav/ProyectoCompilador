@@ -6,199 +6,210 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1709</width>
-    <height>881</height>
+    <width>1110</width>
+    <height>846</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string>MainWindow</string>
   </property>
+  <property name="layoutDirection">
+   <enum>Qt::LeftToRight</enum>
+  </property>
   <widget class="QWidget" name="centralwidget">
-   <widget class="QTextEdit" name="textEdit">
-    <property name="geometry">
-     <rect>
-      <x>60</x>
-      <y>30</y>
-      <width>751</width>
-      <height>581</height>
-     </rect>
-    </property>
-    <property name="font">
-     <font>
-      <family>Consolas</family>
-      <pointsize>10</pointsize>
-     </font>
-    </property>
-    <property name="readOnly">
-     <bool>true</bool>
-    </property>
-    <property name="placeholderText">
-     <string/>
-    </property>
-   </widget>
-   <widget class="QTextEdit" name="textEdit_2">
+   <widget class="QTabWidget" name="tabErroresResultado">
     <property name="geometry">
      <rect>
       <x>10</x>
-      <y>30</y>
-      <width>41</width>
-      <height>571</height>
-     </rect>
-    </property>
-    <property name="font">
-     <font>
-      <family>Consolas</family>
-      <pointsize>10</pointsize>
-     </font>
-    </property>
-    <property name="lineWrapMode">
-     <enum>QTextEdit::NoWrap</enum>
-    </property>
-    <property name="readOnly">
-     <bool>true</bool>
-    </property>
-   </widget>
-   <widget class="QTabWidget" name="tabWidget">
-    <property name="geometry">
-     <rect>
-      <x>830</x>
-      <y>30</y>
-      <width>751</width>
-      <height>581</height>
+      <y>540</y>
+      <width>1091</width>
+      <height>201</height>
      </rect>
     </property>
     <property name="currentIndex">
      <number>1</number>
     </property>
-    <widget class="QWidget" name="tabLexico">
+    <widget class="QWidget" name="tabErrorLexico">
      <attribute name="title">
-      <string>Lexico</string>
+      <string>Errores léxicos</string>
      </attribute>
-     <widget class="QTextEdit" name="textLexico">
+     <layout class="QVBoxLayout" name="verticalLayout_3">
+      <item>
+       <widget class="QPlainTextEdit" name="txtErroresLexico">
+        <property name="readOnly">
+         <bool>true</bool>
+        </property>
+        <property name="plainText">
+         <string/>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </widget>
+    <widget class="QWidget" name="tabErrorSintactico">
+     <attribute name="title">
+      <string>Errores Sintácticos</string>
+     </attribute>
+     <widget class="QTextEdit" name="txtErroresSint">
       <property name="geometry">
        <rect>
         <x>10</x>
         <y>10</y>
-        <width>711</width>
-        <height>491</height>
-       </rect>
-      </property>
-      <property name="readOnly">
-       <bool>true</bool>
-      </property>
-     </widget>
-    </widget>
-    <widget class="QWidget" name="tabSintactico">
-     <attribute name="title">
-      <string>Sintactico</string>
-     </attribute>
-     <widget class="QTextEdit" name="textSintactico">
-      <property name="geometry">
-       <rect>
-        <x>10</x>
-        <y>70</y>
-        <width>671</width>
-        <height>471</height>
-       </rect>
-      </property>
-      <property name="readOnly">
-       <bool>true</bool>
-      </property>
-     </widget>
-     <widget class="QPushButton" name="parseButton">
-      <property name="geometry">
-       <rect>
-        <x>10</x>
-        <y>20</y>
-        <width>93</width>
-        <height>28</height>
-       </rect>
-      </property>
-      <property name="text">
-       <string>PushButton</string>
-      </property>
-     </widget>
-    </widget>
-    <widget class="QWidget" name="tabSemantico">
-     <attribute name="title">
-      <string>Semántico</string>
-     </attribute>
-     <widget class="QTextEdit" name="textSemantico">
-      <property name="geometry">
-       <rect>
-        <x>10</x>
-        <y>10</y>
-        <width>671</width>
-        <height>531</height>
-       </rect>
-      </property>
-      <property name="readOnly">
-       <bool>true</bool>
-      </property>
-     </widget>
-    </widget>
-    <widget class="QWidget" name="tabHashTable">
-     <attribute name="title">
-      <string>Hash Table</string>
-     </attribute>
-     <widget class="QTextEdit" name="textHashTable">
-      <property name="geometry">
-       <rect>
-        <x>10</x>
-        <y>10</y>
-        <width>671</width>
-        <height>531</height>
+        <width>1061</width>
+        <height>151</height>
        </rect>
       </property>
      </widget>
     </widget>
-    <widget class="QWidget" name="tabInterCode">
+    <widget class="QWidget" name="tabResultados">
      <attribute name="title">
-      <string>CodigoIntermedio</string>
+      <string>Resultados</string>
      </attribute>
-     <widget class="QTextEdit" name="textInterCode">
-      <property name="geometry">
-       <rect>
-        <x>10</x>
-        <y>10</y>
-        <width>671</width>
-        <height>531</height>
-       </rect>
-      </property>
-     </widget>
     </widget>
    </widget>
-   <widget class="QTabWidget" name="tabWidget_2">
+   <widget class="QTabWidget" name="tabCompilacion">
     <property name="geometry">
      <rect>
-      <x>0</x>
-      <y>640</y>
-      <width>1521</width>
-      <height>191</height>
+      <x>910</x>
+      <y>10</y>
+      <width>206</width>
+      <height>521</height>
      </rect>
     </property>
     <property name="currentIndex">
      <number>0</number>
     </property>
-    <widget class="QWidget" name="tabErroresLex">
+    <widget class="QWidget" name="tabLexico">
      <attribute name="title">
-      <string>Errores</string>
+      <string>Léxico</string>
      </attribute>
-     <widget class="QTextEdit" name="textErrores">
-      <property name="geometry">
-       <rect>
-        <x>10</x>
-        <y>10</y>
-        <width>1491</width>
-        <height>131</height>
-       </rect>
-      </property>
-      <property name="readOnly">
-       <bool>true</bool>
-      </property>
-     </widget>
+     <layout class="QVBoxLayout" name="verticalLayout">
+      <item>
+       <widget class="QTextEdit" name="txtLexico">
+        <property name="styleSheet">
+         <string notr="true">border-color: rgb(232, 232, 232);</string>
+        </property>
+        <property name="lineWrapMode">
+         <enum>QTextEdit::WidgetWidth</enum>
+        </property>
+        <property name="readOnly">
+         <bool>true</bool>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </widget>
+    <widget class="QWidget" name="tabSintactico">
+     <attribute name="title">
+      <string>Sintáctico</string>
+     </attribute>
+     <layout class="QVBoxLayout" name="verticalLayout">
+      <item>
+       <widget class="QTreeView" name="txtSintactico">
+        <property name="styleSheet">
+         <string notr="true">background-color: rgb(255, 255, 255);
+border-color: rgb(238, 238, 238);</string>
+        </property>
+        <property name="editTriggers">
+         <set>QAbstractItemView::NoEditTriggers</set>
+        </property>
+       </widget>
+      </item>
+     </layout>
     </widget>
    </widget>
+   <widget class="QTextEdit" name="textCodigoFuente">
+    <property name="geometry">
+     <rect>
+      <x>60</x>
+      <y>10</y>
+      <width>841</width>
+      <height>521</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <family>Consolas</family>
+      <pointsize>9</pointsize>
+      <weight>50</weight>
+      <italic>false</italic>
+      <bold>false</bold>
+     </font>
+    </property>
+    <property name="layoutDirection">
+     <enum>Qt::RightToLeft</enum>
+    </property>
+    <property name="horizontalScrollBarPolicy">
+     <enum>Qt::ScrollBarAlwaysOn</enum>
+    </property>
+    <property name="lineWrapMode">
+     <enum>QTextEdit::NoWrap</enum>
+    </property>
+   </widget>
+   <widget class="QListWidget" name="listNumeroLinea">
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>10</y>
+      <width>41</width>
+      <height>501</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <family>Consolas</family>
+     </font>
+    </property>
+   </widget>
+  </widget>
+  <widget class="QMenuBar" name="mbOptions">
+   <property name="geometry">
+    <rect>
+     <x>0</x>
+     <y>0</y>
+     <width>1110</width>
+     <height>26</height>
+    </rect>
+   </property>
+   <property name="layoutDirection">
+    <enum>Qt::LeftToRight</enum>
+   </property>
+   <widget class="QMenu" name="menuArchivo">
+    <property name="title">
+     <string>Archivo</string>
+    </property>
+    <addaction name="actionNuevo_archivo"/>
+    <addaction name="actionAbrir_archivo"/>
+    <addaction name="actionCerrar_archivo"/>
+    <addaction name="separator"/>
+    <addaction name="actionGuardar"/>
+    <addaction name="actionGuardar_como"/>
+    <addaction name="separator"/>
+    <addaction name="actionSalir"/>
+   </widget>
+   <widget class="QMenu" name="menuEditar">
+    <property name="title">
+     <string>Editar</string>
+    </property>
+    <addaction name="actionDeshacer"/>
+    <addaction name="actionRehacer"/>
+    <addaction name="separator"/>
+    <addaction name="actionCortar"/>
+    <addaction name="actionCopiar"/>
+    <addaction name="actionPegar"/>
+   </widget>
+   <widget class="QMenu" name="menuConstruir_y_Debugguear">
+    <property name="title">
+     <string>Ejecutar</string>
+    </property>
+    <addaction name="actionAn_lisis_l_xico"/>
+    <addaction name="actionAnalisis_sintactico"/>
+    <addaction name="actionAn_lisis_sem_ntico"/>
+    <addaction name="separator"/>
+   </widget>
+   <addaction name="menuArchivo"/>
+   <addaction name="menuEditar"/>
+   <addaction name="menuConstruir_y_Debugguear"/>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
   <widget class="QToolBar" name="toolBar">
@@ -211,253 +222,275 @@
    <attribute name="toolBarBreak">
     <bool>false</bool>
    </attribute>
-   <addaction name="iconNew"/>
-   <addaction name="iconOpen"/>
-   <addaction name="iconSave"/>
-   <addaction name="iconClose"/>
+   <addaction name="actionNuevoArchivo"/>
+   <addaction name="actionAbrirArchivo"/>
+   <addaction name="actionGuardar_2"/>
+   <addaction name="actionGuardarComo"/>
+   <addaction name="actionCerrarArchivo"/>
+   <addaction name="separator"/>
+   <addaction name="actionDeshacer_2"/>
+   <addaction name="actionRehacer_2"/>
+   <addaction name="separator"/>
+   <addaction name="actionCompSintax"/>
+   <addaction name="separator"/>
   </widget>
-  <widget class="QMenuBar" name="menubar">
-   <property name="geometry">
-    <rect>
-     <x>0</x>
-     <y>0</y>
-     <width>1709</width>
-     <height>26</height>
-    </rect>
-   </property>
-   <property name="nativeMenuBar">
-    <bool>false</bool>
-   </property>
-   <widget class="QMenu" name="menuFile">
-    <property name="title">
-     <string>File</string>
-    </property>
-    <addaction name="actionNew"/>
-    <addaction name="actionOpen"/>
-    <addaction name="actionClose"/>
-    <addaction name="separator"/>
-    <addaction name="actionSave"/>
-    <addaction name="actionSave_As"/>
-   </widget>
-   <widget class="QMenu" name="menuEdit">
-    <property name="title">
-     <string>Edit</string>
-    </property>
-    <addaction name="actionUndo"/>
-    <addaction name="actionRedo"/>
-    <addaction name="separator"/>
-    <addaction name="actionCopy"/>
-    <addaction name="actionPaste"/>
-    <addaction name="actionCut"/>
-   </widget>
-   <widget class="QMenu" name="menuBuild_and_Debug">
-    <property name="title">
-     <string>Build and Debug</string>
-    </property>
-   </widget>
-   <widget class="QMenu" name="menuAppearance">
-    <property name="title">
-     <string>Appearance</string>
-    </property>
-    <addaction name="actionSet_Dark_Mode"/>
-    <addaction name="actionSet_Light_Mode"/>
-    <addaction name="separator"/>
-    <addaction name="actionIncrease_Font_Size"/>
-    <addaction name="actionDecrease_Font_Size"/>
-   </widget>
-   <widget class="QMenu" name="menuLexico">
-    <property name="title">
-     <string>Lexico</string>
-    </property>
-   </widget>
-   <widget class="QMenu" name="menuSintactico">
-    <property name="title">
-     <string>Sintactico</string>
-    </property>
-   </widget>
-   <widget class="QMenu" name="menuSemantico">
-    <property name="title">
-     <string>Semantico</string>
-    </property>
-   </widget>
-   <widget class="QMenu" name="menuCompilar">
-    <property name="title">
-     <string>Compilar</string>
-    </property>
-   </widget>
-   <addaction name="menuFile"/>
-   <addaction name="menuEdit"/>
-   <addaction name="menuBuild_and_Debug"/>
-   <addaction name="menuAppearance"/>
-   <addaction name="menuLexico"/>
-   <addaction name="menuSintactico"/>
-   <addaction name="menuSemantico"/>
-   <addaction name="menuCompilar"/>
-  </widget>
-  <action name="actionNew">
+  <action name="actionNuevo_archivo">
    <property name="icon">
     <iconset>
      <normaloff>images/new.png</normaloff>images/new.png</iconset>
    </property>
    <property name="text">
-    <string>New</string>
+    <string>Nuevo archivo</string>
    </property>
    <property name="shortcut">
     <string>Ctrl+N</string>
    </property>
   </action>
-  <action name="actionSave">
-   <property name="icon">
-    <iconset>
-     <normaloff>images/save.png</normaloff>images/save.png</iconset>
-   </property>
-   <property name="text">
-    <string>Save</string>
-   </property>
-   <property name="shortcut">
-    <string>Ctrl+S</string>
-   </property>
-  </action>
-  <action name="actionOpen">
+  <action name="actionAbrir_archivo">
    <property name="icon">
     <iconset>
      <normaloff>images/open.png</normaloff>images/open.png</iconset>
    </property>
    <property name="text">
-    <string>Open</string>
+    <string>Abrir archivo</string>
    </property>
    <property name="shortcut">
     <string>Ctrl+O</string>
    </property>
   </action>
-  <action name="actionSave_As">
-   <property name="text">
-    <string>Save As</string>
-   </property>
-   <property name="shortcut">
-    <string>Ctrl+Shift+S</string>
-   </property>
-  </action>
-  <action name="actionUndo">
-   <property name="text">
-    <string>Undo</string>
-   </property>
-   <property name="shortcut">
-    <string>Ctrl+Z</string>
-   </property>
-  </action>
-  <action name="actionRedo">
-   <property name="text">
-    <string>Redo</string>
-   </property>
-   <property name="shortcut">
-    <string>Ctrl+Y</string>
-   </property>
-  </action>
-  <action name="actionCopy">
-   <property name="text">
-    <string>Copy</string>
-   </property>
-   <property name="shortcut">
-    <string>Ctrl+C</string>
-   </property>
-  </action>
-  <action name="actionPaste">
-   <property name="text">
-    <string>Paste</string>
-   </property>
-   <property name="shortcut">
-    <string>Ctrl+V</string>
-   </property>
-  </action>
-  <action name="actionCut">
-   <property name="text">
-    <string>Cut</string>
-   </property>
-   <property name="shortcut">
-    <string>Ctrl+X</string>
-   </property>
-  </action>
-  <action name="actionChange_Font_Size">
-   <property name="text">
-    <string>Change Font Size</string>
-   </property>
-  </action>
-  <action name="actionSet_Dark_Mode">
-   <property name="text">
-    <string>Set Dark Mode</string>
-   </property>
-  </action>
-  <action name="actionSet_Light_Mode">
-   <property name="text">
-    <string>Set Light Mode</string>
-   </property>
-  </action>
-  <action name="actionIncrease_Font_Size">
-   <property name="text">
-    <string>Increase Font Size</string>
-   </property>
-   <property name="shortcut">
-    <string>Ctrl++</string>
-   </property>
-  </action>
-  <action name="actionDecrease_Font_Size">
-   <property name="text">
-    <string>Decrease Font Size</string>
-   </property>
-   <property name="shortcut">
-    <string>Ctrl+_</string>
-   </property>
-  </action>
-  <action name="actionClose">
+  <action name="actionCerrar_archivo">
    <property name="icon">
     <iconset>
      <normaloff>images/close.png</normaloff>images/close.png</iconset>
    </property>
    <property name="text">
-    <string>Close</string>
+    <string>Cerrar archivo</string>
    </property>
    <property name="shortcut">
-    <string>Ctrl+F4</string>
+    <string>Ctrl+J</string>
    </property>
   </action>
-  <action name="iconNew">
-   <property name="icon">
-    <iconset>
-     <normaloff>images/new.png</normaloff>images/new.png</iconset>
-   </property>
-   <property name="text">
-    <string>e</string>
-   </property>
-  </action>
-  <action name="iconSave">
+  <action name="actionGuardar">
    <property name="icon">
     <iconset>
      <normaloff>images/save.png</normaloff>images/save.png</iconset>
    </property>
    <property name="text">
-    <string>s</string>
+    <string>Guardar</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+S</string>
    </property>
   </action>
-  <action name="iconOpen">
+  <action name="actionGuardar_como">
+   <property name="icon">
+    <iconset>
+     <normaloff>images/saveas.png</normaloff>images/saveas.png</iconset>
+   </property>
+   <property name="text">
+    <string>Guardar como...</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+Shift+S</string>
+   </property>
+  </action>
+  <action name="actionSalir">
+   <property name="text">
+    <string>Salir</string>
+   </property>
+  </action>
+  <action name="actionDeshacer">
+   <property name="icon">
+    <iconset>
+     <normaloff>images/undo.png</normaloff>images/undo.png</iconset>
+   </property>
+   <property name="text">
+    <string>Deshacer</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+Z</string>
+   </property>
+  </action>
+  <action name="actionRehacer">
+   <property name="icon">
+    <iconset>
+     <normaloff>images/redo.png</normaloff>images/redo.png</iconset>
+   </property>
+   <property name="text">
+    <string>Rehacer</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+Y</string>
+   </property>
+  </action>
+  <action name="actionCortar">
+   <property name="icon">
+    <iconset>
+     <normaloff>../IDE icons/cut.png</normaloff>../IDE icons/cut.png</iconset>
+   </property>
+   <property name="text">
+    <string>Cortar</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+X</string>
+   </property>
+  </action>
+  <action name="actionCopiar">
+   <property name="icon">
+    <iconset>
+     <normaloff>../IDE icons/copy.png</normaloff>../IDE icons/copy.png</iconset>
+   </property>
+   <property name="text">
+    <string>Copiar</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+C</string>
+   </property>
+  </action>
+  <action name="actionPegar">
+   <property name="icon">
+    <iconset>
+     <normaloff>../IDE icons/paste.png</normaloff>../IDE icons/paste.png</iconset>
+   </property>
+   <property name="text">
+    <string>Pegar</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+V</string>
+   </property>
+  </action>
+  <action name="actionAn_lisis_l_xico">
+   <property name="icon">
+    <iconset>
+     <normaloff>../IDE icons/lexic.png</normaloff>../IDE icons/lexic.png</iconset>
+   </property>
+   <property name="text">
+    <string>Análisis léxico</string>
+   </property>
+  </action>
+  <action name="actionAnalisis_sintactico">
+   <property name="icon">
+    <iconset>
+     <normaloff>../IDE icons/sintax.png</normaloff>../IDE icons/sintax.png</iconset>
+   </property>
+   <property name="text">
+    <string>Análisis sintáctico</string>
+   </property>
+  </action>
+  <action name="actionAn_lisis_sem_ntico">
+   <property name="icon">
+    <iconset>
+     <normaloff>../IDE icons/semantica.png</normaloff>../IDE icons/semantica.png</iconset>
+   </property>
+   <property name="text">
+    <string>Análisis semántico</string>
+   </property>
+  </action>
+  <action name="actionC_digo_intermedio">
+   <property name="text">
+    <string>Código intermedio</string>
+   </property>
+  </action>
+  <action name="actionEjecuci_n">
+   <property name="text">
+    <string>Ejecutar</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+F10</string>
+   </property>
+  </action>
+  <action name="actionNuevoArchivo">
+   <property name="icon">
+    <iconset>
+     <normaloff>images/new.png</normaloff>images/new.png</iconset>
+   </property>
+   <property name="text">
+    <string>Nuevo archivo</string>
+   </property>
+   <property name="toolTip">
+    <string>Nuevo archivo</string>
+   </property>
+  </action>
+  <action name="actionAbrirArchivo">
    <property name="icon">
     <iconset>
      <normaloff>images/open.png</normaloff>images/open.png</iconset>
    </property>
    <property name="text">
-    <string>o</string>
+    <string>Abrir archivo</string>
+   </property>
+   <property name="toolTip">
+    <string>Abrir archivo</string>
    </property>
   </action>
-  <action name="iconClose">
+  <action name="actionGuardar_2">
+   <property name="icon">
+    <iconset>
+     <normaloff>images/save.png</normaloff>images/save.png</iconset>
+   </property>
+   <property name="text">
+    <string>Guardar</string>
+   </property>
+  </action>
+  <action name="actionGuardarComo">
+   <property name="icon">
+    <iconset>
+     <normaloff>images/saveas.png</normaloff>images/saveas.png</iconset>
+   </property>
+   <property name="text">
+    <string>Guardar como...</string>
+   </property>
+   <property name="toolTip">
+    <string>Guardar como...</string>
+   </property>
+  </action>
+  <action name="actionDeshacer_2">
+   <property name="icon">
+    <iconset>
+     <normaloff>images/undo.png</normaloff>images/undo.png</iconset>
+   </property>
+   <property name="text">
+    <string>Deshacer</string>
+   </property>
+  </action>
+  <action name="actionRehacer_2">
+   <property name="icon">
+    <iconset>
+     <normaloff>images/redo.png</normaloff>images/redo.png</iconset>
+   </property>
+   <property name="text">
+    <string>Rehacer</string>
+   </property>
+  </action>
+  <action name="actionCerrarArchivo">
    <property name="icon">
     <iconset>
      <normaloff>images/close.png</normaloff>images/close.png</iconset>
    </property>
    <property name="text">
-    <string>c</string>
+    <string>Cerrar archivo</string>
+   </property>
+   <property name="toolTip">
+    <string>Cerrar archivo</string>
+   </property>
+  </action>
+  <action name="actionCompSintax">
+   <property name="icon">
+    <iconset>
+     <normaloff>images/sint.png</normaloff>images/sint.png</iconset>
+   </property>
+   <property name="text">
+    <string>Analizar sintaxis</string>
+   </property>
+   <property name="toolTip">
+    <string>Analizar Sintaxis</string>
    </property>
   </action>
  </widget>
+ <tabstops>
+  <tabstop>tabCompilacion</tabstop>
+  <tabstop>tabErroresResultado</tabstop>
+ </tabstops>
  <resources/>
  <connections/>
 </ui>
