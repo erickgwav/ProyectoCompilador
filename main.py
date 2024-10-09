@@ -7,6 +7,7 @@ import os
 
 from lexer import lexer
 from sint import parser, set_error_output
+from sem import SemanticAnalyzer
 
 class NoScrollTextEdit(QTextEdit):
     def __init__(self, parent=None):
@@ -54,6 +55,13 @@ class Main(QMainWindow):
         tree_view.header().setDefaultAlignment(Qt.AlignCenter)
         tree_view.header().setStretchLastSection(True)
         tree_view.header().setSectionResizeMode(QHeaderView.ResizeToContents)
+
+        tree_view2 = self.tabCompilacion.findChild(QWidget, "tabSemantico").findChild(QTreeView, "txtSemantico")
+        tree_view2.setAlternatingRowColors(True)
+        tree_view2.setStyleSheet("QTreeView { alternate-background-color: #f0f0f0; }")
+        tree_view2.header().setDefaultAlignment(Qt.AlignCenter)
+        tree_view2.header().setStretchLastSection(True)
+        tree_view2.header().setSectionResizeMode(QHeaderView.ResizeToContents)
         
         self.listNumeroLinea = NoScrollTextEdit(self.centralwidget)
         self.listNumeroLinea.setReadOnly(True)
@@ -191,6 +199,7 @@ class Main(QMainWindow):
         print(result)
         
         self.show_syntax_tree(result)
+        self.show_annotated_tree(result)
     
     def show_syntax_tree(self, tree):
         tree_view = self.tabCompilacion.findChild(QWidget, "tabSintactico").findChild(QTreeView, "txtSintactico")
@@ -209,7 +218,6 @@ class Main(QMainWindow):
         tree_view.header().setDefaultAlignment(Qt.AlignCenter)  # Alineación centrada de los encabezados
         tree_view.header().setStretchLastSection(True)  # Extender la última sección para ocupar todo el espacio disponible
         tree_view.header().setSectionResizeMode(QHeaderView.ResizeToContents)  # Ajustar el tamaño de las secciones según el contenido
-
         
     def add_items(self, element):
         if element is None:  # Si el elemento es None, no lo añadimos al árbol
@@ -230,6 +238,27 @@ class Main(QMainWindow):
         else:
             item = QStandardItem(str(element))
         return item
+    
+    def show_annotated_tree(self, tree):
+        tree_view2 = self.tabCompilacion.findChild(QWidget, "tabSemantico").findChild(QTreeView, "txtSemantico")
+        model = QStandardItemModel()
+        model.setHorizontalHeaderLabels(['Árbol Sintáctico con Anotaciones'])
+
+        # Generamos el árbol anotado
+        analyzer = SemanticAnalyzer()
+        analyzer.analyze(tree)  # Aquí analizamos el árbol
+        annotated_root = analyzer.build_annotated_tree(tree)  # Construimos el árbol con anotaciones
+        model.appendRow(annotated_root)
+
+        tree_view2.setModel(model)
+        tree_view2.expandAll()
+
+        # Formato adicional para QTreeView
+        tree_view2.setAlternatingRowColors(True)
+        tree_view2.setStyleSheet("QTreeView { alternate-background-color: #f0f0f0; }")
+        tree_view2.header().setDefaultAlignment(Qt.AlignCenter)
+        tree_view2.header().setStretchLastSection(True)
+        tree_view2.header().setSectionResizeMode(QHeaderView.ResizeToContents)
 
     def apply_format(self, cursor, start, end, color):
         format = QTextCharFormat()

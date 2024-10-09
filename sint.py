@@ -1,6 +1,8 @@
 import ply.yacc as yacc
 from lexer import tokens
 
+errores_sintacticos = []
+
 def p_programa(p):
     'programa : MAIN LBRACE lista_declaraciones RBRACE'
     p[0] = ('programa', p[3])
@@ -182,9 +184,13 @@ def p_vacio(p):
 
 def p_error(p):
     if p:
-        error_message = f"Syntax error at '{p.value}', line {p.lineno}"
+        error_message = f"Error de sintaxis en '{p.value}', línea {p.lineno}"
+        errores_sintacticos.append(error_message)
+        # Recuperar el análisis después de un error
+        parser.errok()
     else:
-        error_message = "Syntax error at EOF"
+        error_message = "Error de sintaxis en EOF"
+        errores_sintacticos.append(error_message)
     
     # Imprimir el error en el QTextEdit
     if hasattr(parser, 'error_output') and parser.error_output is not None:

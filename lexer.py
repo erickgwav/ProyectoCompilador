@@ -101,7 +101,7 @@ def t_IDENTIFICADOR(t):
     return t
 
 def t_double(t):
-    r'-?\d+\.'
+    r'\d+\.'
     t.lexer.code_start = t.lexer.lexpos  - len(t.value)
     t.lexer.begin('double')
 
