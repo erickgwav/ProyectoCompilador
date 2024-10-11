@@ -1,367 +1,370 @@
 from PyQt5.QtGui import QStandardItem
+import math
 
-class SymbolTable:
-    def __init__(self):
-        # Usaremos una lista de diccionarios para representar los ámbitos (scopes)
-        self.scopes = [{}]
-
-    def add_symbol(self, name, symbol_type, value=None):
-        # Agregar un símbolo al ámbito actual
-        if name in self.scopes[-1]:
-            raise Exception(f"Error: La variable '{name}' ya está declarada en el mismo ámbito.")
-        self.scopes[-1][name] = {"type": symbol_type, "value": value}
-        print(self.scopes[-1][name])
-
-    def lookup(self, name):
-        # Buscar el símbolo en los ámbitos (scope)
-        for scope in reversed(self.scopes):
-            if name in scope:
-                return scope[name]
-        raise Exception(f"Error: La variable '{name}' no está declarada.")
-
-    def enter_scope(self):
-        # Entrar a un nuevo ámbito (scope)
-        self.scopes.append({})
-
-    def exit_scope(self):
-        # Salir del ámbito actual
-        if len(self.scopes) > 1:
-            self.scopes.pop()
-        else:
-            raise Exception("Error: No se puede salir del ámbito global.")
+symbol_table = {}
+temp_sym_table = {}
 
 class SemanticAnalyzer:
     def __init__(self):
-        self.symbol_table = SymbolTable()
         self.errors = []
-        self.annotated_tree = None
 
-    def analyze(self, node):
-        print(f"Procesando nodo: {node}")
-        # El nodo es una tupla que viene del árbol sintáctico generado por parser.py
-        if isinstance(node, list):
-            for item in node:
-                if item is not None:
-                    self.analyze(item)
-            return
+    def analyze(self, syntax_tree):
+        declarations = syntax_tree[1]
+        annotated_tree = self.process_program(declarations)
+        return ('programa', annotated_tree)
 
-        node_type = node[0]
+    def process_program(self, declarations):
+        annotated_declarations = []
+        for declaration in declarations:
+            if isinstance(declaration, tuple) and declaration[0] in ['int', 'double']:
+                annotated_declarations.append(self.process_variable_declaration(declaration))
+            elif declaration[0] == '=':
+                annotated_declarations.append(self.process_assignment(declaration))
+            elif declaration[0] in ['if', 'if-else', 'do-until', 'while']:
+                annotated_declarations.append(self.process_logical_structure(declaration))
+            elif declaration[0] in ['cin', 'cout']:
+                annotated_declarations.append(self.process_input_output(declaration))
+            elif isinstance(declaration, list):
+                annotated_declarations.append(self.process_program(declaration))
+        return (annotated_declarations)
 
-        if node_type == "programa":
-            # Entramos en el ámbito global
-            self.symbol_table.enter_scope()
-            for decl in node[1]:  # Analizar las declaraciones dentro del programa
-                self.analyze(decl) # Analizar cada declaración por separado
-            self.symbol_table.exit_scope()
+    def process_variable_declaration(self, declaration):
+        var_type = declaration[0]
+        variables = declaration[1]
+        annotated_vars = []
+        for var in variables:
+            annotated_vars.append((var, f'tipo={var_type}', 'valor=ninguno'))
+            if var in symbol_table:
+                self.errors.append(f"Error: '{var}' ya se ha declarado")
+                return (var, 'Error')
+            else:
+                if var in temp_sym_table:
+                    self.add_to_symbol_table(var, var_type, None, temp_sym_table.get(var)["lineno"])
+        return (var_type, annotated_vars)
 
-        elif node_type == "declaracion_variable":
-            var_type = node[1]
-            for var in node[2]:
-                try:
-                    self.symbol_table.add_symbol(var, var_type)
-                    self.annotate_node(var, var_type, None)
-                except Exception as e:
-                    self.errors.append(str(e))
+    def process_assignment(self, assignment):
+        var_name = assignment[1]
+        expr = assignment[2]
 
-        elif node_type == "asignacion":
-            var_name = node[1]
-            try:
-                symbol = self.symbol_table.lookup(var_name)
-                expr_value = self.evaluate_expression(node[2])  # Evalúa la expresión
-                expr_type = self.get_type(expr_value)
+        if var_name not in symbol_table:
+            self.errors.append(f"Error: '{var_name}' aún no se ha declarado.")
+            return (var_name, 'error')
 
-                # Verificar que el tipo de la expresión coincide con el tipo de la variable
-                if not self.is_type_compatible(symbol['type'], expr_type):
-                    raise Exception(f"Error de tipos: No se puede asignar un valor de tipo '{expr_type}' a la variable '{var_name}' de tipo '{symbol['type']}'.")
-
-                symbol["value"] = expr_value
-                self.annotate_node(node, symbol["type"], expr_value)  # Anota el valor y el tipo
-            except Exception as e:
-                self.errors.append(str(e))
-
-        elif node_type in ["if", "if-else"]:
-            condition = node[1]
-            condition_value = self.evaluate_expression(condition)
-            condition_type = self.get_type(condition_value)
-
-            if condition_type != "int":
-                self.errors.append(f"Error: La condición del 'if' debe ser de tipo 'int', no '{condition_type}'.")
-
-            self.annotate_node(node, "int", None)  # Anotar el tipo de la condición
-            for statement in node[2]:
-                self.analyze(statement)
-            if node_type == "if-else":
-                for statement in node[3]:
-                    self.analyze(statement)
-
-        elif node_type == "while":
-            condition = node[1]
-            condition_value = self.evaluate_expression(condition)
-            condition_type = self.get_type(condition_value)
-
-            if condition_type != "int":
-                self.errors.append(f"Error: La condición del 'while' debe ser de tipo 'int', no '{condition_type}'.")
-
-            self.annotate_node(node, "int", None)
-            for statement in node[2]:
-                self.analyze(statement)
-
-        elif node_type == "do-until":
-            for statement in node[1]:
-                self.analyze(statement)
-            condition = node[2]
-            condition_value = self.evaluate_expression(condition)
-            condition_type = self.get_type(condition_value)
-
-            if condition_type != "int":
-                self.errors.append(f"Error: La condición del 'do-until' debe ser de tipo 'int', no '{condition_type}'.")
-
-            self.annotate_node(node, "int", None)
-
-        elif node_type == "cin":
-            var_name = node[1]
-            try:
-                symbol = self.symbol_table.lookup(var_name)
-                self.annotate_node(node, symbol['type'], None)
-            except Exception as e:
-                self.errors.append(f"Error: La variable '{var_name}' no está declarada para CIN.")
-
-        elif node_type == "cout":
-            expression = node[1]
-            expression_value = self.evaluate_expression(expression)
-            expression_type = self.get_type(expression_value)
-            self.annotate_node(node, expression_type, None)
-
-        elif node_type in ('+', '-', '*', '/', 'and', 'or', '>', '<', '>=', '<=', '==', '!='):
-            self.annotate_node(node, "operador", None)
-
+        var_type = symbol_table[var_name]["type"]
+        if not isinstance(expr, tuple):
+            expr_value = self.evaluate_expression(expr, var_type, True)
         else:
-            # Aquí se pueden manejar otros nodos como expresiones, condicionales, etc.
-            pass
+            expr_value = self.evaluate_expression(expr, var_type, False)
 
-    def annotate_node(self, node, node_type=None, value=None):
-        if isinstance(node, tuple):
-            node_name = node[0]
-            if node_type is None:
+        if isinstance(expr_value, tuple):
+            symbol_table[var_name]["value"] = expr_value[1]
+            value = expr_value[1]
+            if value == None:
+                self.errors.append(f"Error: La asignacion de '{var_name}' es errónea")
+                return (assignment[0], var_name, [f'tipo={var_type}', f'valor=Error', (expr_value[0], expr_value[2], expr_value[3])])
+            return (assignment[0], var_name, [f'tipo={var_type}', f'valor={expr_value[1]}', (expr_value[0], expr_value[2], expr_value[3])])
+        else:
+            symbol_table[var_name]["value"] = expr_value
+            if expr_value == None:
+                self.errors.append(f"Error: La asignacion de '{var_name}' es errónea")
+                return (assignment[0], var_name, [f'tipo={var_type}', f'valor=Error'])
+            return (assignment[0], var_name, [f'tipo={var_type}', f'valor={expr_value}'])
+        
+    def process_logical_structure(self, declaration):
+        if declaration[0] == 'if':
+            return ('if', self.process_logical_relation(declaration, False), self.process_program(declaration[2]))
+        elif declaration[0] == 'if-else':
+            return [('if', self.process_logical_relation(declaration, False), self.process_program(declaration[2])), ('else', self.process_program(declaration[3]))]
+        elif declaration[0] == 'do-until':
+            return [('do', self.process_program(declaration[1])), ('until', self.process_logical_relation(declaration[2], True))]
+        elif declaration[0] == 'while':
+            return [('while', self.process_logical_relation(declaration[1], True)), (self.process_program(declaration[2]))]
+    
+    def process_logical_relation(self, condition, comp):
+        if comp:
+            relation = condition
+        else:
+            relation = condition[1]
+        if relation[0] == 'relacion':
+            comparator = relation[1]
+            first_term = relation[2][0]
+            second_term = relation[2][1]
+            isNotInTable_1 = symbol_table.get(first_term) is None
+            isNotInTable_2 = symbol_table.get(second_term) is None
+            var_type = None
+            if not isNotInTable_1 and isNotInTable_2:
+                var_type = symbol_table.get(first_term)["type"]
+            elif not isNotInTable_2 and isNotInTable_1:
+                var_type = symbol_table.get(second_term)["type"]
+            else:
                 try:
-                    symbol_info = self.symbol_table.lookup(node_name)
-                    node_type = symbol_info.get("type", "desconocido")
-                    value = symbol_info.get("value", None)
-                except Exception:
-                    node_type = "desconocido"
-                    value = None
+                    int(first_term)
+                    var_type = 'int'
+                except:
+                    try:
+                        float(first_term)
+                        var_type = 'double'
+                    except:
+                        var_type = 'int'
+            relation_value = self.evaluate_relation(comparator, first_term, second_term, var_type)
+            if comp:
+                return (relation[0] + f' valor={relation_value}', relation_value, (comparator, first_term, second_term))
+            else:
+                return (relation[0] + f'valor={relation_value}', relation_value, (comparator, first_term, second_term, self.process_program(condition[2])))
+        elif relation[0] == 'comparator':
+            comparator = relation[1]
+            first_exp = relation[2][0]
+            second_exp = relation[2][1]
+            logical_relation_1 = self.process_logical_relation(first_exp, True)
+            logical_relation_2 = self.process_logical_relation(second_exp, True)
+            if comparator == 'or':
+                return (relation[0], comparator, f'\n valor={logical_relation_1[1] or logical_relation_2[1]}', logical_relation_1, logical_relation_2)
+            elif comparator == 'and':
+                return (relation[0], comparator, f'\n valor={logical_relation_1[1] and logical_relation_2[1]}', logical_relation_1, logical_relation_2)
+    
+    
+    def process_input_output(self, declaration):
+        isNotInTable = symbol_table.get(declaration[1][0]) is None
+        if not isNotInTable:
+            return (declaration[0], declaration[1][0], f'valor={symbol_table.get(declaration[1][0])["value"]}')
+        else:
+            self.errors.append(f"Error: La variable '{declaration[1][0]}' aún no ha sido declarada")
+            return None
 
-            annotated_node = QStandardItem(f"{node_name} [Tipo: {node_type}, Valor: {value}]")
+    def evaluate_relation(self, comparator, first_term, second_term, var_type):
+        if comparator == '>':
+            return self.evaluate_expression(first_term, var_type, False) > self.evaluate_expression(second_term, var_type, False)
+        elif comparator == '<':
+            return self.evaluate_expression(first_term, var_type, False) < self.evaluate_expression(second_term, var_type, False)
+        elif comparator == '>=':
+            return self.evaluate_expression(first_term, var_type, False) >= self.evaluate_expression(second_term, var_type, False)
+        elif comparator == '<=':
+            return self.evaluate_expression(first_term, var_type, False) <= self.evaluate_expression(second_term, var_type, False)
+        elif comparator == '==':
+            return self.evaluate_expression(first_term, var_type, False) == self.evaluate_expression(second_term, var_type, False)
+        elif comparator == '!=':
+            return self.evaluate_expression(first_term, var_type, False) != self.evaluate_expression(second_term, var_type, False)
 
-            for child in node[1:]:
-                annotated_child = self.build_annotated_tree(child)
-                if annotated_child:
-                    annotated_node.appendRow(annotated_child)
-
-            if self.annotated_tree is None:
-                self.annotated_tree = annotated_node
-
-            return annotated_node
-
-        elif isinstance(node, (int, float)):
-            # Corrige el tipo para números
-            node_type = "int" if isinstance(node, int) else "double"
-            return QStandardItem(f"{node} [Tipo: {node_type}, Valor: {node}]")
-
-        elif isinstance(node, str):
-            # Corrige el tipo para cadenas e identificadores
-            try:
-                symbol = self.symbol_table.lookup(node)
-                node_type = symbol['type']
-                value = symbol['value']
-            except Exception:
-                node_type = "string"  # Para literales que no son variables
-                value = node
-            return QStandardItem(f"{node} [Tipo: {node_type}, Valor: {value}]")
-
-    def evaluate_expression(self, node):
-        if isinstance(node, str):
-            if node == 'true':
-                return True
-            elif node == 'false':
-                return False
-
-            # Intentamos convertir a número
-            try:
-                if '.' in node:
-                    return float(node)
+    def evaluate_expression(self, expr, var_type, is_assign):
+        isNotInTable = symbol_table.get(expr) is None
+        if isinstance(expr, tuple):
+            value_1 = self.evaluate_expression(expr[1], var_type, False)
+            value_2 = self.evaluate_expression(expr[2], var_type, False)
+            if value_1 == None:
+                return None
+            if value_2 == None:
+                return None
+            tuple_1 = None
+            tuple_2 = None
+            value_1_tuple = False
+            value_2_tuple = False
+            if isinstance(value_1, tuple):
+                tuple_1 = value_1
+                value_1 = value_1[1]
+                value_1_tuple = True
+            if isinstance(value_2, tuple):
+                tuple_2 = value_2
+                value_2 = value_2[1]
+                value_2_tuple = True
+            if expr[0] == '+':
+                result = value_1 + value_2
+                if var_type == 'int':
+                    result = math.trunc(result)
+                if value_1_tuple and value_2_tuple:
+                    return (expr[0] + f' valor={result}', result, (tuple_1[0], tuple_1[2], tuple_1[3]), (tuple_2[0], tuple_2[2], tuple_2[3]))
+                elif value_1_tuple:
+                    return (expr[0] + f' valor={result}', result, (tuple_1[0], tuple_1[2], tuple_1[3]), value_2)
+                elif value_2_tuple:
+                    return (expr[0] + f' valor={result}', result, value_1, (tuple_2[0], tuple_2[2], tuple_2[3]))
                 else:
-                    return int(node)
-            except ValueError:
-                pass
-
-            # Si no es un número, es una variable
-            try:
-                symbol = self.symbol_table.lookup(node)
-                if symbol['value'] is None:
-                    raise Exception(f"Error: La variable '{node}' no ha sido inicializada.")
-                return symbol['value']
-            except Exception as e:
-                raise Exception(f"Error: {str(e)}")
-
-        if isinstance(node, (int, float, bool)):
-            return node
-
-        if not isinstance(node, tuple) or len(node) < 2:
-            raise Exception(f"Nodo mal formado: {node}")
-
-        operator = node[0]
-
-        if operator in ('++', '--'):
-            operand = self.evaluate_expression(node[1])
-            if isinstance(operand, (int, float)):
-                result = operand + 1 if operator == '++' else operand - 1
-                self.annotate_node(node, "operador", result)
-                return result
-            else:
-                raise Exception(f"Error de tipos: {operand} no es compatible con la operación {operator}.")
-
-        if len(node) < 3:
-            raise Exception(f"Nodo mal formado para operación binaria: {node}")
-        
-        left = self.evaluate_expression(node[1])
-        right = self.evaluate_expression(node[2])
-        if left is None or right is None:
-            raise Exception(f"Error: La variable no ha sido inicializada antes de su uso en la operación {operator}.")
-
-        # Operaciones aritméticas
-        if operator in ('+', '-', '*', '/'):
-            if isinstance(left, (int, float)) and isinstance(right, (int, float)):
-                if operator == '+':
-                    result = left + right
-                elif operator == '-':
-                    result = left - right
-                elif operator == '*':
-                    result = left * right
-                elif operator == '/':
-                    if right != 0:
-                        result = left / right
-                    else:
-                        raise Exception("Error: División por cero.")
-                self.annotate_node(node, "operador", result)
-                return result
-            else:
-                raise Exception(f"Error de tipos: {left} y {right} no son compatibles para la operación {operator}.")
-        
-        # Operaciones lógicas
-        elif operator in ('and', 'or'):
-            if isinstance(left, bool) and isinstance(right, bool):
-                result = left and right if operator == 'and' else left or right
-                self.annotate_node(node, "operador", result)
-                return result
-            else:
-                raise Exception(f"Error de tipos: {left} y {right} no son compatibles para la operación {operator}.")
-
-        # Operaciones relacionales
-        elif operator in ('>', '<', '>=', '<=', '==', '!='):
-            if isinstance(left, (int, float)) and isinstance(right, (int, float)):
-                if operator == '>':
-                    result = left > right
-                elif operator == '<':
-                    result = left < right
-                elif operator == '>=':
-                    result = left >= right
-                elif operator == '<=':
-                    result = left <= right
-                elif operator == '==':
-                    result = left == right
-                elif operator == '!=':
-                    result = left != right
-                self.annotate_node(node, "operador", result)
-                return result
-            else:
-                raise Exception(f"Error de tipos: {left} y {right} no son compatibles para la operación {operator}.")
-        
+                    return (expr[0] + f' valor={result}', result, value_1, value_2)
+            elif expr[0] == '-':
+                result = value_1 - value_2
+                if var_type == 'int':
+                    result = math.trunc(result)
+                if value_1_tuple and value_2_tuple:
+                    return (expr[0] + f' valor={result}', result, (tuple_1[0], tuple_1[2], tuple_1[3]), (tuple_2[0], tuple_2[2], tuple_2[3]))
+                elif value_1_tuple:
+                    return (expr[0] + f' valor={result}', result, (tuple_1[0], tuple_1[2], tuple_1[3]), value_2)
+                elif value_2_tuple:
+                    return (expr[0] + f' valor={result}', result, value_1, (tuple_2[0], tuple_2[2], tuple_2[3]))
+                else:
+                    return (expr[0] + f' valor={result}', result, value_1, value_2)
+            elif expr[0] == '*':
+                result = value_1 * value_2
+                if var_type == 'int':
+                    result = math.trunc(result)
+                if value_1_tuple and value_2_tuple:
+                    return (expr[0] + f' valor={result}', result, (tuple_1[0], tuple_1[2], tuple_1[3]), (tuple_2[0], tuple_2[2], tuple_2[3]))
+                elif value_1_tuple:
+                    return (expr[0] + f' valor={result}', result, (tuple_1[0], tuple_1[2], tuple_1[3]), value_2)
+                elif value_2_tuple:
+                    return (expr[0] + f' valor={result}', result, value_1, (tuple_2[0], tuple_2[2], tuple_2[3]))
+                else:
+                    return (expr[0] + f' valor={result}', result, value_1, value_2)
+            elif expr[0] == '/':
+                result = value_1 / value_2
+                if var_type == 'int':
+                    result = math.trunc(result)
+                if value_1_tuple and value_2_tuple:
+                    return (expr[0] + f' valor={result}', result, (tuple_1[0], tuple_1[2], tuple_1[3]), (tuple_2[0], tuple_2[2], tuple_2[3]))
+                elif value_1_tuple:
+                    return (expr[0] + f' valor={result}', result, (tuple_1[0], tuple_1[2], tuple_1[3]), value_2)
+                elif value_2_tuple:
+                    return (expr[0] + f' valor={result}', result, value_1, (tuple_2[0], tuple_2[2], tuple_2[3]))
+                else:
+                    return (expr[0] + f' valor={result}', result, value_1, value_2)
+            elif expr[0] == '%':
+                result = value_1 % value_2
+                if var_type == 'int':
+                    result = math.trunc(result)
+                if value_1_tuple and value_2_tuple:
+                    return (expr[0] + f' valor={result}', result, (tuple_1[0], tuple_1[2], tuple_1[3]), (tuple_2[0], tuple_2[2], tuple_2[3]))
+                elif value_1_tuple:
+                    return (expr[0] + f' valor={result}', result, (tuple_1[0], tuple_1[2], tuple_1[3]), value_2)
+                elif value_2_tuple:
+                    return (expr[0] + f' valor={result}', result, value_1, (tuple_2[0], tuple_2[2], tuple_2[3]))
+                else:
+                    return (expr[0] + f' valor={result}', result, value_1, value_2)
+            elif expr[0] == '^':
+                result = value_1 ** value_2
+                if var_type == 'int':
+                    result = math.trunc(result)
+                if value_1_tuple and value_2_tuple:
+                    return (expr[0] + f' valor={result}', result, (tuple_1[0], tuple_1[2], tuple_1[3]), (tuple_2[0], tuple_2[2], tuple_2[3]))
+                elif value_1_tuple:
+                    return (expr[0] + f' valor={result}', result, (tuple_1[0], tuple_1[2], tuple_1[3]), value_2)
+                elif value_2_tuple:
+                    return (expr[0] + f' valor={result}', result, value_1, (tuple_2[0], tuple_2[2], tuple_2[3]))
+                else:
+                    return (expr[0] + f' valor={result}', result, value_1, value_2)
+        elif not isNotInTable:
+            return self.evaluate_expression(symbol_table.get(expr)["value"], symbol_table.get(expr)["type"], False)
         else:
-            raise Exception(f"Operador {operator} no reconocido.")
+            if is_assign:
+                try:
+                    return int(expr)
+                except:
+                    return None
+            else:
+                expr = float(expr)
+                if expr % 1 == 0:
+                    math.trunc(expr)
+                    return int(expr)
+                else:
+                    return expr
+                
+    def return_symbol_table(self):
+        return symbol_table
 
-    def build_annotated_tree(self, node):
-        if isinstance(node, tuple):
-            node_name = node[0]
-            try:
-                symbol_info = self.symbol_table.lookup(node_name)
-                node_type = symbol_info.get("type", "desconocido")
-                value = symbol_info.get("value", None)
-            except Exception:
-                node_type = "desconocido"
-                value = None
-
-            annotated_node = QStandardItem(f"{node_name} [Tipo: {node_type}, Valor: {value}]")
-
-            for child in node[1:]:
-                child_node = self.build_annotated_tree(child)
-                if child_node:
-                    annotated_node.appendRow(child_node)
-
-            return annotated_node
-
-        elif isinstance(node, (int, float, bool)):
-            node_type = "int" if isinstance(node, int) else "double" if isinstance(node, float) else "bool"
-            return QStandardItem(f"{node} [Tipo: {node_type}, Valor: {node}]")
-
-        elif isinstance(node, str):
-            try:
-                symbol = self.symbol_table.lookup(node)
-                node_type = symbol['type']
-                value = symbol['value']
-            except Exception:
-                node_type = "string"  # Para literales que no son variables
-                value = node
-            return QStandardItem(f"{node} [Tipo: {node_type}, Valor: {value}]")
-
-        elif isinstance(node, list):
-            list_node = QStandardItem("Lista")
-            for item in node:
-                child_node = self.build_annotated_tree(item)
-                if child_node:
-                    list_node.appendRow(child_node)
-            return list_node
-
+    def add_to_symbol_table(self, var_name, var_type, value, lineno):
+        loc = len(symbol_table) + 1
+        if var_name in symbol_table:
+            if isinstance(symbol_table[var_name], list):
+                symbol_table[var_name].append({
+                    "name": var_name,
+                    "type": var_type,
+                    "value": value,
+                    "loc": loc,
+                    "lineno": lineno
+                })
+            else:
+                symbol_table[var_name] = [symbol_table[var_name], {
+                    "name": var_name,
+                    "type": var_type,
+                    "value": value,
+                    "loc": loc,
+                    "lineno": lineno
+                }]
         else:
-            return QStandardItem(str(node))
+            symbol_table[var_name] = {
+                "name": var_name,
+                "type": var_type,
+                "value": value,
+                "loc": loc,
+                "lineno": lineno
+            }
 
-    def get_type(self, value):
-        if isinstance(value, int):
-            return "int"
-        elif isinstance(value, float):
-            return "double"
-        elif isinstance(value, bool):
-            return "bool"
-        elif isinstance(value, str):
-            return "string"
+    def clean_temp_sym_table(self):
+        temp_sym_table.clear()
+    
+    def add_to_temp_symbol_table(var_name, lineno):
+        if not var_name in temp_sym_table:
+            temp_sym_table[var_name] = {
+                "name": var_name,
+                "lineno": [lineno]
+            }
         else:
-            return "unknown"
-
-    def is_type_compatible(self, var_type, expr_type):
-        # Define las reglas de compatibilidad de tipos
-        # Por ejemplo, un int puede ser asignado a un double
-        compatibility = {
-            "int": ["int"],
-            "double": ["int", "double"],
-            "bool": ["bool"],
-            "string": ["string"],
-        }
-        return expr_type in compatibility.get(var_type, [])
-
-    def print_errors(self):
-        for error in self.errors:
-            print(error)
+            lineno_tab = temp_sym_table.get(var_name)["lineno"]
+            lineno_tab.append(lineno)
+            temp_sym_table[var_name] = {
+                "name": var_name,
+                "lineno": lineno_tab
+            }
 
     def print_symbol_table(self):
-        print("Tabla de Símbolos:")
-        for i, scope in enumerate(self.scopes):
-            print(f"Ambito {i}:")
-            for name, info in scope.items():
-                print(f"  {name}: Tipo={info['type']}, Valor={info['value']}")
+        print("Tabla de simbolos:")
+        for var, info in symbol_table.items():
+            print(f"{var} -> {info}")
+        html_table = "<table style='border-collapse: collapse;' width='100%'><tr style='color: #1155d4; font-size: 15px'><th style='padding: 8px;'>Variable</th><th style='padding: 8px;'>Tipo</th><th style='padding: 8px;'>Valor</th><th style='padding: 8px;'>Número de Registro</th><th style='padding: 8px;'>Líneas</th></tr>"
+        
+        for var, info in symbol_table.items():
+            html_table += f"<tr><td style='text-align: center; padding: 5px;'>{var}</td>"
+            html_table += f"<td style='text-align: center; padding: 5px;'>{info['type']}</td>"
+            html_table += f"<td style='text-align: center; padding: 5px;'>{info['value'] if info['value'] is not None else 'none'}</td>"
+            html_table += f"<td style='text-align: center; padding: 5px;'>{info['loc']}</td>"
+            html_table += f"<td style='text-align: center; padding: 5px;'>{info['lineno']}</td></tr>"
+        
+        html_table += "</table>"
+        return html_table
 
-# Ejemplo de uso (suponiendo que ya tienes el árbol sintáctico generado en parser.py)
-def analyze_syntax_tree(syntax_tree):
-    analyzer = SemanticAnalyzer()
-    analyzer.analyze(syntax_tree)
-    analyzer.print_errors()
-    analyzer.print_symbol_table()
+    def build_annotated_tree(self, tree):
+        annotated_tree_item = self.add_annotated_items(tree)
+        return annotated_tree_item
+
+    def add_annotated_items(self, element):
+        if element is None:
+            return None
+
+        if isinstance(element, tuple):
+            node_type = str(element[0])
+            annotations = ', '.join([str(item) for item in element[1:]])
+
+            item = QStandardItem(f"{node_type} [{annotations}]")
+            
+            for child in element[1:]:
+                child_item = self.add_annotated_items(child)
+                if child_item is not None:
+                    item.appendRow(child_item)
+
+        elif isinstance(element, list):
+            item = QStandardItem("lista")
+            for subelement in element:
+                subitem = self.add_annotated_items(subelement)
+                if subitem is not None:
+                    item.appendRow(subitem)
+
+        elif isinstance(element, tuple) and element[0] == 'do-until':
+            item = QStandardItem(f"do-until [{element[1:]}]")
+            body_item = self.add_annotated_items(element[1])
+            condition_item = self.add_annotated_items(element[2]) 
+            if body_item:
+                item.appendRow(body_item)
+            if condition_item:
+                item.appendRow(condition_item)
+
+        else:
+            item = QStandardItem(str(element))
+
+        return item
+
+
+    def print_errors(self):
+        if self.errors:
+            print("Errores semanticos:")
+            for error in self.errors:
+                print(error)
+            return self.errors
+        else:
+            print("No se encontraron errores semanticos.")
+            return None

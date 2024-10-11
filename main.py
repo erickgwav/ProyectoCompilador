@@ -1,6 +1,6 @@
 from PyQt5.QtCore import Qt, QStandardPaths
 from PyQt5.QtGui import QTextCharFormat, QColor, QTextCursor, QStandardItemModel, QStandardItem
-from PyQt5.QtWidgets import QMainWindow, QApplication, QFileDialog, QTextEdit, QHBoxLayout, QVBoxLayout, QSizePolicy, QWidget, QTreeView, QHeaderView
+from PyQt5.QtWidgets import QMainWindow, QApplication, QFileDialog, QTextEdit, QPlainTextEdit, QHBoxLayout, QVBoxLayout, QSizePolicy, QWidget, QTreeView, QHeaderView
 from PyQt5.uic import loadUi
 import sys
 import os
@@ -22,6 +22,7 @@ class Main(QMainWindow):
         loadUi("main.ui", self)
         
         self.line_numbers = []
+        self.syntax_errors = []
         
         self.current_path = None
         self.current_fontSize = 10
@@ -119,10 +120,10 @@ class Main(QMainWindow):
             'COUT': QColor(184, 22, 87),
             'INC': QColor(227, 9, 9),
             'DEC': QColor(227, 9, 9),
-            'SUMA': QColor(227, 9, 9),
-            'RESTA': QColor(227, 9, 9),
-            'DIVIDE': QColor(227, 9, 9),
-            'MULT': QColor(227, 9, 9),
+            'MAS': QColor(227, 9, 9),
+            'MENOS': QColor(227, 9, 9),
+            'ENTRE': QColor(227, 9, 9),
+            'POR': QColor(227, 9, 9),
             'MOD': QColor(227, 9, 9),
             'POT': QColor(227, 9, 9),
             'MORETHAN': QColor(2, 179, 8),
@@ -141,7 +142,7 @@ class Main(QMainWindow):
     def analyzeText(self):
         text = self.textCodigoFuente.toPlainText()
         
-        if not text:  # Si el texto está vacío, no hay nada que analizar
+        if not text:
             self.tabCompilacion.findChild(QWidget, "tabLexico").findChild(QTextEdit, "txtLexico").setHtml("")
             return
         
@@ -151,7 +152,7 @@ class Main(QMainWindow):
                 self.band = 1
             
             cursor.select(QTextCursor.SelectionType.Document)
-            cursor.setCharFormat(QTextCharFormat())  # Borrar formato existente
+            cursor.setCharFormat(QTextCharFormat())
             cursor.clearSelection()
             
             lexer.input(text)
@@ -165,41 +166,64 @@ class Main(QMainWindow):
                 cursor.setPosition(tok.lexpos)
                 start = tok.lexpos
                 end = start + len(tok.value)
-                # Aplicar formato solo si el tipo de token tiene un color definido
                 if tok.type in self.token_formats:
                     self.apply_format(cursor, start, end, self.token_formats[tok.type])
             
-            # Preparar el HTML de los lexemas encontrados
             html_table = "<table style='border-collapse: collapse;' width='100%'><tr style='color: #1155d4; font-size: 15px'><th style='padding: 8px;'>Tipo</th><th style='padding: 8px;'>Valor</th><th style='padding: 8px;'>Línea</th><th style='padding: 8px;'>Posición</th></tr>"
             for lexeme in lexemes:
                 html_table += f"<tr><td style='text-align: center; padding: 5px; font-weight: bold;'>{lexeme[0]}</td><td style='text-align: center; padding: 5px; font-weight: bold; color: #c4213f;'>{lexeme[1]}</td><td style='text-align: center; padding: 5px;'>{lexeme[2]}</td><td style='text-align: center; padding: 5px;'>{lexeme[3]}</td></tr>"
             html_table += "</table>"
 
-            # Asumiendo que `txtLexico` es el QTextEdit dentro de `tabLexico`
-            # y `tabLexico` es una pestaña dentro de `tabCompilacion`
             scroll_position = self.tabCompilacion.findChild(QWidget, "tabLexico").findChild(QTextEdit, "txtLexico").verticalScrollBar().value()
             self.tabCompilacion.findChild(QWidget, "tabLexico").findChild(QTextEdit, "txtLexico").setHtml(html_table)
             self.tabCompilacion.findChild(QWidget, "tabLexico").findChild(QTextEdit, "txtLexico").verticalScrollBar().setValue(scroll_position)
             self.band = 0
         except Exception as e:
-            # Capturar cualquier error y mostrar un mensaje de error
             print("ERROR: ", e)
-
     
     def sintax_analize(self):
+        global syntax_errors    
         text = self.textCodigoFuente.toPlainText()
-        
-        # Configurar el QTextEdit para errores en el parser
-        set_error_output(self.txtErroresSint)
-        
-        # Limpiar el QTextEdit de errores antes de analizar
+                
         self.txtErroresSint.clear()
         
         result = parser.parse(text)
-        print(result)
+        print('ARBOL SINTACTICO:\n', result)
         
         self.show_syntax_tree(result)
-        self.show_annotated_tree(result)
+        self.semantic_analize()
+    
+    def semantic_analize(self):
+        analyzer = SemanticAnalyzer()
+        analyzer.clean_temp_sym_table()
+        text = self.textCodigoFuente.toPlainText()
+        result = parser.parse(text)
+        annotated_tree = analyzer.analyze(result)
+        annotated_root = analyzer.build_annotated_tree(annotated_tree)
+        tree_view2 = self.tabCompilacion.findChild(QWidget, "tabSemantico").findChild(QTreeView, "txtSemantico")
+        model = QStandardItemModel()
+        model.setHorizontalHeaderLabels(['Árbol Sintáctico con Anotaciones'])
+
+        model.appendRow(annotated_root)
+
+        scroll_position = self.tabCompilacion.findChild(QWidget, "tabHash").findChild(QTextEdit, "txtHash").verticalScrollBar().value()
+        self.tabCompilacion.findChild(QWidget, "tabHash").findChild(QTextEdit, "txtHash").setHtml(analyzer.print_symbol_table())
+        self.tabCompilacion.findChild(QWidget, "tabHash").findChild(QTextEdit, "txtHash").verticalScrollBar().setValue(scroll_position)
+        
+        tree_view2.setModel(model)
+        tree_view2.expandAll()
+
+        tree_view2.setAlternatingRowColors(True)
+        tree_view2.setStyleSheet("QTreeView { alternate-background-color: #f0f0f0; }")
+        tree_view2.header().setDefaultAlignment(Qt.AlignCenter)
+        tree_view2.header().setStretchLastSection(True)
+        tree_view2.header().setSectionResizeMode(QHeaderView.ResizeToContents)
+        errors = analyzer.print_errors()
+        if errors:
+            errors = "\n".join(errors)
+        else:
+            errors = ""
+        self.tabErroresResultado.findChild(QWidget, "tabErrorSemantico").findChild(QPlainTextEdit, "txtErroresSemantico").setPlainText(errors)
     
     def show_syntax_tree(self, tree):
         tree_view = self.tabCompilacion.findChild(QWidget, "tabSintactico").findChild(QTreeView, "txtSintactico")
@@ -212,53 +236,37 @@ class Main(QMainWindow):
         tree_view.setModel(model)
         tree_view.expandAll()
 
-        # Formato adicional para QTreeView
-        tree_view.setAlternatingRowColors(True)  # Colores alternados en las filas
-        tree_view.setStyleSheet("QTreeView { alternate-background-color: #f0f0f0; }")  # Color de fondo alternado
-        tree_view.header().setDefaultAlignment(Qt.AlignCenter)  # Alineación centrada de los encabezados
-        tree_view.header().setStretchLastSection(True)  # Extender la última sección para ocupar todo el espacio disponible
-        tree_view.header().setSectionResizeMode(QHeaderView.ResizeToContents)  # Ajustar el tamaño de las secciones según el contenido
+        tree_view.setAlternatingRowColors(True) 
+        tree_view.setStyleSheet("QTreeView { alternate-background-color: #f0f0f0; }")
+        tree_view.header().setDefaultAlignment(Qt.AlignCenter)
+        tree_view.header().setStretchLastSection(True)
+        tree_view.header().setSectionResizeMode(QHeaderView.ResizeToContents)
         
     def add_items(self, element):
-        if element is None:  # Si el elemento es None, no lo añadimos al árbol
+        if element is None:
             return None
 
         if isinstance(element, tuple):
             item = QStandardItem(str(element[0]))
             for child in element[1:]:
                 child_item = self.add_items(child)
-                if child_item is not None:  # Solo añadimos el hijo si no es None
+                if child_item is not None: 
                     item.appendRow(child_item)
         elif isinstance(element, list):
             item = QStandardItem("lista_declaraciones")
             for subelement in element:
                 subitem = self.add_items(subelement)
-                if subitem is not None:  # Solo añadimos el subelemento si no es None
+                if subitem is not None: 
                     item.appendRow(subitem)
         else:
             item = QStandardItem(str(element))
         return item
     
-    def show_annotated_tree(self, tree):
-        tree_view2 = self.tabCompilacion.findChild(QWidget, "tabSemantico").findChild(QTreeView, "txtSemantico")
-        model = QStandardItemModel()
-        model.setHorizontalHeaderLabels(['Árbol Sintáctico con Anotaciones'])
+    def show_syntax_errors(self):
+        global syntax_errors
+        error_text = "\n".join(syntax_errors)
+        self.tabErroresResultado.findChild(QWidget, "tabErrorSintactico").findChild(QPlainTextEdit, "txtErroresSintactico").setPlainText(error_text)
 
-        # Generamos el árbol anotado
-        analyzer = SemanticAnalyzer()
-        analyzer.analyze(tree)  # Aquí analizamos el árbol
-        annotated_root = analyzer.build_annotated_tree(tree)  # Construimos el árbol con anotaciones
-        model.appendRow(annotated_root)
-
-        tree_view2.setModel(model)
-        tree_view2.expandAll()
-
-        # Formato adicional para QTreeView
-        tree_view2.setAlternatingRowColors(True)
-        tree_view2.setStyleSheet("QTreeView { alternate-background-color: #f0f0f0; }")
-        tree_view2.header().setDefaultAlignment(Qt.AlignCenter)
-        tree_view2.header().setStretchLastSection(True)
-        tree_view2.header().setSectionResizeMode(QHeaderView.ResizeToContents)
 
     def apply_format(self, cursor, start, end, color):
         format = QTextCharFormat()
@@ -346,16 +354,14 @@ class Main(QMainWindow):
         lines = len(self.line_numbers)
         line_numbers = '\n'.join(str(i + 1) for i in range(lines))
         self.listNumeroLinea.setPlainText(line_numbers)
-        self.listNumeroLinea.verticalScrollBar().setValue(scroll_position)  # Restaurar la posición de la barra de desplazamiento
+        self.listNumeroLinea.verticalScrollBar().setValue(scroll_position)
         self.listNumeroLinea.blockSignals(False)
 
     def set_default_font_size(self):
-        # Establecer el tamaño de fuente por defecto para textEdit
         font = self.textCodigoFuente.font()
         font.setPointSize(self.current_fontSize)
         self.textCodigoFuente.setFont(font)
 
-        # Establecer el tamaño de fuente por defecto para lineNumberTextEdit
         lineNumberFont = self.listNumeroLinea.font()
         lineNumberFont.setFamily("Consolas")
         lineNumberFont.setPointSize(self.current_fontSize)

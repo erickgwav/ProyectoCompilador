@@ -1,5 +1,6 @@
 import ply.yacc as yacc
 from lexer import tokens
+from sem import SemanticAnalyzer
 
 errores_sintacticos = []
 
@@ -27,7 +28,7 @@ def p_comentario(p):
 
 def p_declaracion_variable(p):
     'declaracion_variable : tipo identificador SEMICOLON'
-    p[0] = ('declaracion_variable', p[1], p[2])
+    p[0] = (p[1], p[2])
 
 def p_identificador(p):
     '''identificador : identificador COMMA IDENTIFICADOR
@@ -44,12 +45,9 @@ def p_tipo(p):
 
 def p_lista_sentencias(p):
     '''lista_sentencias : lista_sentencias sentencia 
-                      | sentencia
                       | vacio'''
     if len(p) == 3:
         p[0] = p[1] + [p[2]]
-    elif len(p) == 2:
-        p[0] = [p[1]]
     else:
         p[0] = []
 
@@ -61,23 +59,24 @@ def p_sentencia(p):
                 | salida
                 | asignacion
                 | incremento
-                | decremento'''
+                | decremento
+                | declaracion_variable'''
     p[0] = p[1]
 
 def p_asignacion(p):
-    'asignacion : IDENTIFICADOR ASSIGN p_expresion_finalizada'
-    p[0] = ('asignacion', p[1], p[3])
+    'asignacion : IDENTIFICADOR ASSIGN expresion_finalizada'
+    p[0] = (p[2], p[1], p[3])
 
 def p_incremento(p):
     'incremento : IDENTIFICADOR INC SEMICOLON'
-    p[0] = ('incremento', p[1])
+    p[0] = ('incremento', p[1], '+', [p[1], '1'])
 
 def p_decremento(p):
     'decremento : IDENTIFICADOR DEC SEMICOLON'
-    p[0] = ('decremento', p[1])
+    p[0] = ('decremento', p[1], '-', [p[1], 1])
 
 def p_expresion_finalizada(p):
-    '''p_expresion_finalizada : expresion SEMICOLON
+    '''expresion_finalizada : expresion SEMICOLON
                        | SEMICOLON'''
     if len(p) == 3:
         p[0] = p[1]
@@ -109,12 +108,23 @@ def p_salida(p):
     p[0] = ('cout', p[2])
 
 def p_expresion(p):
-    '''expresion : expresion AND expresion
-                 | expresion OR expresion
-                 | expresion_simple operacion_relacional expresion_simple
-                 | expresion_simple'''
+    '''expresion : expresion operador_comparacion expresion_comparacion
+                 | expresion_comparacion'''
     if len(p) == 4:
-        p[0] = (p[2], p[1], p[3])
+        p[0] = ('comparador', p[2], p[1], p[3])
+    else:
+        p[0] = p[1]
+
+def p_operador_comparacion(p):
+    '''operador_comparacion : AND
+                     | OR'''
+    p[0] = p[1]
+
+def p_expresion_comparacion(p):
+    '''expresion_comparacion : expresion_simple operacion_relacional expresion_simple
+                       | expresion_simple'''
+    if len(p) == 4:
+        p[0] = ('relacion', p[2], [p[1], p[3]])
     else:
         p[0] = p[1]
 
@@ -124,9 +134,7 @@ def p_operacion_relacional(p):
                    | MOREEQUALS
                    | LESSEQUALS
                    | EQUALS
-                   | NOTEQUALS
-                   | AND
-                   | OR'''
+                   | NOTEQUALS'''
     p[0] = p[1]
 
 def p_expresion_simple(p):
@@ -138,8 +146,8 @@ def p_expresion_simple(p):
         p[0] = p[1]
 
 def p_primer_operador(p):
-    '''primer_operador : SUMA
-                | RESTA'''
+    '''primer_operador : MAS
+                | MENOS'''
     p[0] = p[1]
 
 def p_term(p):
@@ -151,8 +159,8 @@ def p_term(p):
         p[0] = p[1]
 
 def p_segundo_operador(p):
-    '''segundo_operador : MULT
-              | DIVIDE
+    '''segundo_operador : POR
+              | ENTRE
               | MOD'''
     p[0] = p[1]
 
@@ -186,19 +194,16 @@ def p_error(p):
     if p:
         error_message = f"Error de sintaxis en '{p.value}', línea {p.lineno}"
         errores_sintacticos.append(error_message)
-        # Recuperar el análisis después de un error
         parser.errok()
     else:
         error_message = "Error de sintaxis en EOF"
         errores_sintacticos.append(error_message)
     
-    # Imprimir el error en el QTextEdit
     if hasattr(parser, 'error_output') and parser.error_output is not None:
         parser.error_output.append(error_message)
     else:
         print(error_message)
 
-# Función para establecer el QTextEdit para errores
 def set_error_output(output_widget):
     parser.error_output = output_widget
 

@@ -27,7 +27,7 @@
      </rect>
     </property>
     <property name="currentIndex">
-     <number>1</number>
+     <number>2</number>
     </property>
     <widget class="QWidget" name="tabErrorLexico">
      <attribute name="title">
@@ -48,23 +48,37 @@
     </widget>
     <widget class="QWidget" name="tabErrorSintactico">
      <attribute name="title">
-      <string>Errores Sintácticos</string>
+      <string>Errores sintácticos</string>
      </attribute>
-     <widget class="QTextEdit" name="txtErroresSint">
-      <property name="geometry">
-       <rect>
-        <x>10</x>
-        <y>10</y>
-        <width>1061</width>
-        <height>151</height>
-       </rect>
-      </property>
-     </widget>
+     <layout class="QVBoxLayout" name="verticalLayout_4">
+      <item>
+       <widget class="QPlainTextEdit" name="txtErroresSint">
+        <property name="readOnly">
+         <bool>true</bool>
+        </property>
+        <property name="plainText">
+         <string/>
+        </property>
+       </widget>
+      </item>
+     </layout>
     </widget>
-    <widget class="QWidget" name="tabResultados">
+    <widget class="QWidget" name="tabErrorSemantico">
      <attribute name="title">
-      <string>Resultados</string>
+      <string>Errores semánticos</string>
      </attribute>
+     <layout class="QVBoxLayout" name="verticalLayout_5">
+      <item>
+       <widget class="QPlainTextEdit" name="txtErroresSemantico">
+        <property name="readOnly">
+         <bool>true</bool>
+        </property>
+        <property name="plainText">
+         <string/>
+        </property>
+       </widget>
+      </item>
+     </layout>
     </widget>
    </widget>
    <widget class="QTabWidget" name="tabCompilacion">
@@ -77,7 +91,7 @@
      </rect>
     </property>
     <property name="currentIndex">
-     <number>0</number>
+     <number>2</number>
     </property>
     <widget class="QWidget" name="tabLexico">
      <attribute name="title">
@@ -107,8 +121,44 @@
       <item>
        <widget class="QTreeView" name="txtSintactico">
         <property name="styleSheet">
-         <string notr="true">background-color: rgb(255, 255, 255);
-border-color: rgb(238, 238, 238);</string>
+         <string notr="true">background-color: rgb(255, 255, 255);border-color: rgb(238, 238, 238);</string>
+        </property>
+        <property name="editTriggers">
+         <set>QAbstractItemView::NoEditTriggers</set>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </widget>
+    <widget class="QWidget" name="tabHash">
+     <attribute name="title">
+      <string>Tabla Hash</string>
+     </attribute>
+     <layout class="QVBoxLayout" name="verticalLayout">
+      <item>
+       <widget class="QTextEdit" name="txtHash">
+        <property name="styleSheet">
+         <string notr="true">border-color: rgb(232, 232, 232);</string>
+        </property>
+        <property name="lineWrapMode">
+         <enum>QTextEdit::WidgetWidth</enum>
+        </property>
+        <property name="readOnly">
+         <bool>true</bool>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </widget>
+    <widget class="QWidget" name="tabSemantico">
+     <attribute name="title">
+      <string>Semántico</string>
+     </attribute>
+     <layout class="QVBoxLayout" name="verticalLayout">
+      <item>
+       <widget class="QTreeView" name="txtSemantico">
+        <property name="styleSheet">
+         <string notr="true">background-color: rgb(255, 255, 255); border-color: rgb(238, 238, 238);</string>
         </property>
         <property name="editTriggers">
          <set>QAbstractItemView::NoEditTriggers</set>

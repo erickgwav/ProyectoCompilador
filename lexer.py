@@ -1,4 +1,5 @@
 import ply.lex as lex
+from sem import SemanticAnalyzer
 
 reserved = {
     'if': 'IF',
@@ -37,10 +38,10 @@ tokens = [
     'PIPE',
     'INC',
     'DEC',
-    'SUMA',
-    'RESTA',
-    'DIVIDE',
-    'MULT',
+    'MAS',
+    'MENOS',
+    'ENTRE',
+    'POR',
     'MOD',
     'POT',
     'ASSIGN',
@@ -73,10 +74,10 @@ t_RBRACKET = r'\]'
 t_PIPE = r'\|'
 t_INC = r'\+\+'
 t_DEC = r'--'
-t_SUMA = r'\+'
-t_RESTA = r'-'
-t_DIVIDE = r'/'
-t_MULT = r'\*'
+t_MAS = r'\+'
+t_MENOS = r'-'
+t_ENTRE = r'/'
+t_POR = r'\*'
 t_MOD = r'%'
 t_POT = r'\^'
 t_ASSIGN = r'='
@@ -98,16 +99,27 @@ def t_COMENTARIO(t):
 def t_IDENTIFICADOR(t):
     r'[a-zA-Z_][a-zA-Z_0-9]*'
     t.type = reserved.get(t.value,'IDENTIFICADOR')
+    if t.type == 'IDENTIFICADOR':
+        print(t.lexer.lineno)
+        print(t.value)
+        print(t.type)
+        if not t.value in SemanticAnalyzer.return_symbol_table(SemanticAnalyzer):
+            SemanticAnalyzer.add_to_temp_symbol_table(t.value, t.lexer.lineno)
     return t
 
 def t_double(t):
     r'\d+\.'
     t.lexer.code_start = t.lexer.lexpos  - len(t.value)
+    if t.lexer.lexdata[t.lexer.code_start - 1].isdigit() or t.lexer.lexdata[t.lexer.code_start - 1].isalpha():
+        t.value = t.lexer.lexdata[t.lexer.code_start]
+        t.type = 'MENOS'
+        t.lexer.lexpos = t.lexer.code_start + 1
+        t.lexer.begin('INITIAL')
+        return t
     t.lexer.begin('double')
 
 def t_double_isdouble(t):
     r'\d+'
-    #t.value = float(t.value)
     t.value = t.lexer.lexdata[t.lexer.code_start:t.lexer.lexpos]
     t.type = "DOUBLE"
     t.lexpos = t.lexer.code_start
@@ -115,8 +127,6 @@ def t_double_isdouble(t):
     return t
 
 def t_double_error(t):
-    print("Ilegal character at '%s' in line %d column %d" % (t.value[0], t.lexer.lineno, t.lexer.lexpos + 1))
-    print(t.type)
     t.lexer.skip(-1)
     t.value = "Ilegal character at '%s' in line %d column %d" % (t.value[0], t.lexer.lineno, t.lexer.lexpos + 1)
     t.lexer.begin('deletedot')
@@ -129,7 +139,13 @@ def t_deletedot_delete(t):
 
 def t_INT(t):
     r'-?\d+'
-    #print(t.value)
+    t.lexer.code_start = t.lexer.lexpos  - len(t.value)
+    if t.lexer.lexdata[t.lexer.code_start - 1].isdigit() or t.lexer.lexdata[t.lexer.code_start - 1].isalpha():
+        t.value = t.lexer.lexdata[t.lexer.code_start]
+        t.type = 'MENOS'
+        t.lexer.lexpos = t.lexer.code_start + 1
+        t.lexer.begin('INITIAL')
+        return t
     return t
 
 def t_newline(t):
@@ -137,8 +153,6 @@ def t_newline(t):
     t.lexer.lineno += 1
 
 def t_error(t):
-    print("Ilegal character at '%s' in line %d column %d" % (t.value[0], t.lexer.lineno, t.lexer.lexpos + 1))
-    print(t.type)
     t.lexer.skip(1)
     t.value = "Ilegal character at '%s' in line %d column %d" % (t.value[0], t.lexer.lineno, t.lexer.lexpos + 1)
     return t
