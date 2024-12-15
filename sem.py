@@ -1,5 +1,5 @@
 from PyQt5.QtGui import QStandardItem
-import math
+import math, re
 
 symbol_table = {}
 temp_sym_table = {}
@@ -56,7 +56,7 @@ class SemanticAnalyzer:
         else:
             expr_value = self.evaluate_expression(expr, var_type, False)
 
-        if isinstance(expr_value, tuple):
+        if isinstance(expr_value, tuple) and len(expr_value) > 2:
             symbol_table[var_name]["value"] = expr_value[1]
             value = expr_value[1]
             if value == None:
@@ -64,21 +64,27 @@ class SemanticAnalyzer:
                 return (assignment[0], var_name, [f'tipo={var_type}', f'valor=Error', (expr_value[0], expr_value[2], expr_value[3])])
             return (assignment[0], var_name, [f'tipo={var_type}', f'valor={expr_value[1]}', (expr_value[0], expr_value[2], expr_value[3])])
         else:
-            symbol_table[var_name]["value"] = expr_value
+            if isinstance(expr_value, tuple):
+                symbol_table[var_name]["value"] = expr_value[0]
+            else:
+                symbol_table[var_name]["value"] = expr_value
             if expr_value == None:
                 self.errors.append(f"Error: La asignacion de '{var_name}' es errónea")
                 return (assignment[0], var_name, [f'tipo={var_type}', f'valor=Error'])
-            return (assignment[0], var_name, [f'tipo={var_type}', f'valor={expr_value}'])
+            return (assignment[0], var_name, [f'tipo={var_type}', f'valor={expr_value[0]}'])
         
     def process_logical_structure(self, declaration):
         if declaration[0] == 'if':
             return ('if', self.process_logical_relation(declaration, False), self.process_program(declaration[2]))
         elif declaration[0] == 'if-else':
-            return [('if', self.process_logical_relation(declaration, False), self.process_program(declaration[2])), ('else', self.process_program(declaration[3]))]
+            cond = self.process_logical_relation(declaration, False)
+            cuerpo_if = self.process_program(declaration[2])
+            cuerpo_else = self.process_program(declaration[3])
+            return ('if-else', cond, cuerpo_if, cuerpo_else)
         elif declaration[0] == 'do-until':
-            return [('do', self.process_program(declaration[1])), ('until', self.process_logical_relation(declaration[2], True))]
+            return ('do', self.process_program(declaration[1])), ('until', self.process_logical_relation(declaration[2], True))
         elif declaration[0] == 'while':
-            return [('while', self.process_logical_relation(declaration[1], True)), (self.process_program(declaration[2]))]
+            return ('while', self.process_logical_relation(declaration[1], True)), (self.process_program(declaration[2]))
     
     def process_logical_relation(self, condition, comp):
         if comp:
@@ -111,10 +117,10 @@ class SemanticAnalyzer:
                 return (relation[0] + f' valor={relation_value}', relation_value, (comparator, first_term, second_term))
             else:
                 return (relation[0] + f'valor={relation_value}', relation_value, (comparator, first_term, second_term, self.process_program(condition[2])))
-        elif relation[0] == 'comparator':
+        elif relation[0] == 'comparador':
             comparator = relation[1]
-            first_exp = relation[2][0]
-            second_exp = relation[2][1]
+            first_exp = relation[2]
+            second_exp = relation[3]
             logical_relation_1 = self.process_logical_relation(first_exp, True)
             logical_relation_2 = self.process_logical_relation(second_exp, True)
             if comparator == 'or':
@@ -124,9 +130,12 @@ class SemanticAnalyzer:
     
     
     def process_input_output(self, declaration):
-        isNotInTable = symbol_table.get(declaration[1][0]) is None
+        isNotInTable = symbol_table.get(declaration[1]) is None
         if not isNotInTable:
-            return (declaration[0], declaration[1][0], f'valor={symbol_table.get(declaration[1][0])["value"]}')
+            return (declaration[0], declaration[1], f'valor={symbol_table.get(declaration[1])["value"]}')
+        elif isinstance(declaration[1], tuple):
+            expr_value = self.evaluate_expression(declaration[1], 'int', False)
+            return (declaration[0], f'valor={expr_value[1]}', expr_value)
         else:
             self.errors.append(f"Error: La variable '{declaration[1][0]}' aún no ha sido declarada")
             return None
@@ -160,99 +169,151 @@ class SemanticAnalyzer:
             value_2_tuple = False
             if isinstance(value_1, tuple):
                 tuple_1 = value_1
-                value_1 = value_1[1]
+                if len(value_1) == 2:
+                    value_1 = value_1[0]
+                else:
+                    value_1 = value_1[1]
                 value_1_tuple = True
             if isinstance(value_2, tuple):
                 tuple_2 = value_2
-                value_2 = value_2[1]
+                if len(value_2) == 2:
+                    value_2 = value_2[0]
+                else:
+                    value_2 = value_2[1]
                 value_2_tuple = True
             if expr[0] == '+':
                 result = value_1 + value_2
+                res_type = var_type
                 if var_type == 'int':
                     result = math.trunc(result)
+                    res_type="int"
+                if isinstance(value_1, float) or isinstance(value_2, float):
+                    result = float(result)
+                    res_type="double"
+                if expr[0] == '=' and var_type == 'double':
+                    result = float(result)
                 if value_1_tuple and value_2_tuple:
-                    return (expr[0] + f' valor={result}', result, (tuple_1[0], tuple_1[2], tuple_1[3]), (tuple_2[0], tuple_2[2], tuple_2[3]))
+                    return (expr[0] + f' valor={result}', result, (tuple_1), (tuple_2), f'tipo={res_type}')
                 elif value_1_tuple:
-                    return (expr[0] + f' valor={result}', result, (tuple_1[0], tuple_1[2], tuple_1[3]), value_2)
+                    return (expr[0] + f' valor={result}', result, (tuple_1), value_2, f'tipo={res_type}')
                 elif value_2_tuple:
-                    return (expr[0] + f' valor={result}', result, value_1, (tuple_2[0], tuple_2[2], tuple_2[3]))
+                    return (expr[0] + f' valor={result}', result, value_1, (tuple_2), f'tipo={res_type}')
                 else:
-                    return (expr[0] + f' valor={result}', result, value_1, value_2)
+                    return (expr[0] + f' valor={result}', result, value_1, value_2, f'tipo={res_type}')
             elif expr[0] == '-':
                 result = value_1 - value_2
+                res_type = var_type
                 if var_type == 'int':
                     result = math.trunc(result)
+                    res_type="int"
+                if isinstance(value_1, float) or isinstance(value_2, float):
+                    result = float(result)
+                    res_type="double"
                 if value_1_tuple and value_2_tuple:
-                    return (expr[0] + f' valor={result}', result, (tuple_1[0], tuple_1[2], tuple_1[3]), (tuple_2[0], tuple_2[2], tuple_2[3]))
+                    return (expr[0] + f' valor={result}', result, (tuple_1), (tuple_2), f'tipo={res_type}')
                 elif value_1_tuple:
-                    return (expr[0] + f' valor={result}', result, (tuple_1[0], tuple_1[2], tuple_1[3]), value_2)
+                    return (expr[0] + f' valor={result}', result, (tuple_1), value_2, f'tipo={res_type}')
                 elif value_2_tuple:
-                    return (expr[0] + f' valor={result}', result, value_1, (tuple_2[0], tuple_2[2], tuple_2[3]))
+                    return (expr[0] + f' valor={result}', result, value_1, (tuple_2), f'tipo={res_type}')
                 else:
-                    return (expr[0] + f' valor={result}', result, value_1, value_2)
+                    return (expr[0] + f' valor={result}', result, value_1, value_2, f'tipo={res_type}')
             elif expr[0] == '*':
                 result = value_1 * value_2
+                res_type = var_type
+                if isinstance(value_1, float) or isinstance(value_2, float):
+                    result = float(result)
+                    res_type="double"
                 if var_type == 'int':
                     result = math.trunc(result)
+                    res_type="int"
                 if value_1_tuple and value_2_tuple:
-                    return (expr[0] + f' valor={result}', result, (tuple_1[0], tuple_1[2], tuple_1[3]), (tuple_2[0], tuple_2[2], tuple_2[3]))
+                    return (expr[0] + f' valor={result}', result, (tuple_1), (tuple_2), f'tipo={res_type}')
                 elif value_1_tuple:
-                    return (expr[0] + f' valor={result}', result, (tuple_1[0], tuple_1[2], tuple_1[3]), value_2)
+                    return (expr[0] + f' valor={result}', result, (tuple_1), value_2, f'tipo={res_type}')
                 elif value_2_tuple:
-                    return (expr[0] + f' valor={result}', result, value_1, (tuple_2[0], tuple_2[2], tuple_2[3]))
+                    return (expr[0] + f' valor={result}', result, value_1, (tuple_2), f'tipo={res_type}')
                 else:
-                    return (expr[0] + f' valor={result}', result, value_1, value_2)
+                    return (expr[0] + f' valor={result}', result, value_1, value_2, f'tipo={res_type}')
             elif expr[0] == '/':
                 result = value_1 / value_2
-                if var_type == 'int':
+                res_type = var_type
+                if var_type == 'int' or isinstance(value_1, int):
                     result = math.trunc(result)
+                    result = int(result)
+                    res_type="int"
+                if isinstance(value_1, float) or isinstance(value_2, float):
+                    result = float(result)
+                    res_type="double"
                 if value_1_tuple and value_2_tuple:
-                    return (expr[0] + f' valor={result}', result, (tuple_1[0], tuple_1[2], tuple_1[3]), (tuple_2[0], tuple_2[2], tuple_2[3]))
+                    return (expr[0] + f' valor={result}', result, (tuple_1), (tuple_2), f'tipo={res_type}')
                 elif value_1_tuple:
-                    return (expr[0] + f' valor={result}', result, (tuple_1[0], tuple_1[2], tuple_1[3]), value_2)
+                    return (expr[0] + f' valor={result}', result, (tuple_1), value_2, f'tipo={res_type}')
                 elif value_2_tuple:
-                    return (expr[0] + f' valor={result}', result, value_1, (tuple_2[0], tuple_2[2], tuple_2[3]))
+                    return (expr[0] + f' valor={result}', result, value_1, (tuple_2), f'tipo={res_type}')
                 else:
-                    return (expr[0] + f' valor={result}', result, value_1, value_2)
+                    return (expr[0] + f' valor={result}', result, value_1, value_2, f'tipo={res_type}')
             elif expr[0] == '%':
                 result = value_1 % value_2
+                res_type = var_type
+                if isinstance(value_1, float) or isinstance(value_2, float):
+                    result = float(result)
+                    res_type="double"
                 if var_type == 'int':
                     result = math.trunc(result)
+                    res_type="int"
                 if value_1_tuple and value_2_tuple:
-                    return (expr[0] + f' valor={result}', result, (tuple_1[0], tuple_1[2], tuple_1[3]), (tuple_2[0], tuple_2[2], tuple_2[3]))
+                    return (expr[0] + f' valor={result}', result, (tuple_1), (tuple_2), f'tipo={res_type}')
                 elif value_1_tuple:
-                    return (expr[0] + f' valor={result}', result, (tuple_1[0], tuple_1[2], tuple_1[3]), value_2)
+                    return (expr[0] + f' valor={result}', result, (tuple_1), value_2, f'tipo={res_type}')
                 elif value_2_tuple:
-                    return (expr[0] + f' valor={result}', result, value_1, (tuple_2[0], tuple_2[2], tuple_2[3]))
+                    return (expr[0] + f' valor={result}', result, value_1, (tuple_2), f'tipo={res_type}')
                 else:
-                    return (expr[0] + f' valor={result}', result, value_1, value_2)
+                    return (expr[0] + f' valor={result}', result, value_1, value_2, f'tipo={res_type}')
             elif expr[0] == '^':
                 result = value_1 ** value_2
+                res_type = var_type
+                if isinstance(value_1, float) or isinstance(value_2, float):
+                    result = float(result)
+                    res_type="double"
                 if var_type == 'int':
                     result = math.trunc(result)
+                    res_type="int"
                 if value_1_tuple and value_2_tuple:
-                    return (expr[0] + f' valor={result}', result, (tuple_1[0], tuple_1[2], tuple_1[3]), (tuple_2[0], tuple_2[2], tuple_2[3]))
+                    return (expr[0] + f' valor={result}', result, (tuple_1), (tuple_2), f'tipo={res_type}')
                 elif value_1_tuple:
-                    return (expr[0] + f' valor={result}', result, (tuple_1[0], tuple_1[2], tuple_1[3]), value_2)
+                    return (expr[0] + f' valor={result}', result, (tuple_1), value_2, f'tipo={res_type}')
                 elif value_2_tuple:
-                    return (expr[0] + f' valor={result}', result, value_1, (tuple_2[0], tuple_2[2], tuple_2[3]))
+                    return (expr[0] + f' valor={result}', result, value_1, (tuple_2), f'tipo={res_type}')
                 else:
-                    return (expr[0] + f' valor={result}', result, value_1, value_2)
+                    return (expr[0] + f' valor={result}', result, value_1, value_2, f'tipo={res_type}')
         elif not isNotInTable:
             return self.evaluate_expression(symbol_table.get(expr)["value"], symbol_table.get(expr)["type"], False)
         else:
             if is_assign:
-                try:
-                    return int(expr)
-                except:
-                    return None
+                if var_type == 'double':
+                    try:
+                        return (float(expr), 'type=double')
+                    except:
+                        return None
+                elif var_type == 'int':
+                    try:
+                        return (int(expr), 'type=int')
+                    except:
+                        return None
             else:
+                str_val = expr
+                float_re = re.compile('-?\d+.\d+')
                 expr = float(expr)
-                if expr % 1 == 0:
+                is_float = False
+                if isinstance(str_val, str):
+                    is_float = float_re.match(str_val)
+                elif var_type == 'double':
+                    is_float = True
+                if expr % 1 == 0 and not is_float:
                     math.trunc(expr)
-                    return int(expr)
+                    return (int(expr), 'type=int')
                 else:
-                    return expr
+                    return (expr, 'type=double')
                 
     def return_symbol_table(self):
         return symbol_table
@@ -287,6 +348,7 @@ class SemanticAnalyzer:
 
     def clean_temp_sym_table(self):
         temp_sym_table.clear()
+        symbol_table.clear()
     
     def add_to_temp_symbol_table(var_name, lineno):
         if not var_name in temp_sym_table:
@@ -303,9 +365,6 @@ class SemanticAnalyzer:
             }
 
     def print_symbol_table(self):
-        print("Tabla de simbolos:")
-        for var, info in symbol_table.items():
-            print(f"{var} -> {info}")
         html_table = "<table style='border-collapse: collapse;' width='100%'><tr style='color: #1155d4; font-size: 15px'><th style='padding: 8px;'>Variable</th><th style='padding: 8px;'>Tipo</th><th style='padding: 8px;'>Valor</th><th style='padding: 8px;'>Número de Registro</th><th style='padding: 8px;'>Líneas</th></tr>"
         
         for var, info in symbol_table.items():

@@ -16,6 +16,218 @@ class NoScrollTextEdit(QTextEdit):
     def wheelEvent(self, event):
         pass
 
+class CodeGenerator:
+    def __init__(self):
+        self.code_p = []
+        self.label_counter = 0
+
+    def generate_code(self, syntax_tree):
+        self.code_p = []
+        self.label_counter = 0
+        self.traverse_tree(syntax_tree)
+        return self.code_p
+
+    def new_label(self):
+        label = f"LABEL_{self.label_counter}"
+        self.label_counter += 1
+        return label
+
+    def traverse_tree(self, node):
+        if not node:
+            return
+
+        if isinstance(node, tuple):
+            node_type = node[0]
+
+            if node_type == 'programa':
+                for declaration in node[1]:
+                    self.traverse_tree(declaration)
+
+            elif node_type == '=':
+                var_name = node[1]
+                expr = node[2]
+                self.traverse_tree(expr)
+                self.code_p.append(f"STORE {var_name}")
+
+            elif node_type in ('+', '-', '*', '/', '%'):
+                self.traverse_tree(node[1])
+                self.traverse_tree(node[2])
+                operation = {'+': 'ADD', '-': 'SUB', '*': 'MUL', '/': 'DIV', '%': 'MOD'}[node_type]
+                self.code_p.append(operation)
+
+            elif node_type == 'if-else':
+                self.traverse_tree(node[1])  # Condición
+                label_else = self.new_label()
+                self.code_p.append(f"JMPZ {label_else}")
+                self.traverse_tree(node[2])  # Rama if
+                label_end = self.new_label()
+                self.code_p.append(f"JMP {label_end}")
+                self.code_p.append(f"{label_else}:")
+                self.traverse_tree(node[3])  # Rama else
+                self.code_p.append(f"{label_end}:")
+
+            elif node_type == 'while':
+                label_start = self.new_label()
+                self.code_p.append(f"{label_start}:")
+                self.traverse_tree(node[1])  # Condición
+                label_end = self.new_label()
+                self.code_p.append(f"JMPZ {label_end}")
+                self.traverse_tree(node[2])  # Cuerpo
+                self.code_p.append(f"JMP {label_start}")
+                self.code_p.append(f"{label_end}:")
+
+            elif node_type == 'do-until':
+                label_start = self.new_label()
+                self.code_p.append(f"{label_start}:")
+                self.traverse_tree(node[1])  # Cuerpo
+                self.traverse_tree(node[2])  # Condición
+                self.code_p.append(f"JMPZ {label_start}")
+
+            elif node_type == 'cout':
+                self.traverse_tree(node[1])
+                self.code_p.append("PRINT")
+
+            elif node_type == 'relacion':
+                # Relación como '>', '<', '==', etc.
+                self.traverse_tree(node[2][0])  # Lado izquierdo
+                self.traverse_tree(node[2][1])  # Lado derecho
+                operador = {
+                    '>': 'GT',
+                    '<': 'LT',
+                    '>=': 'GE',
+                    '<=': 'LE',
+                    '==': 'EQ',
+                    '!=': 'NE'
+                }[node[1]]
+                self.code_p.append(operador)
+
+            elif node_type == 'incremento':
+                var_name = node[1]
+                self.code_p.append(f"LOAD {var_name}")
+                self.code_p.append("PUSH 1")
+                self.code_p.append("ADD")
+                self.code_p.append(f"STORE {var_name}")
+
+            elif node_type == 'decremento':
+                var_name = node[1]
+                self.code_p.append(f"LOAD {var_name}")
+                self.code_p.append("PUSH 1")
+                self.code_p.append("SUB")
+                self.code_p.append(f"STORE {var_name}")
+
+
+        elif isinstance(node, list):
+            for element in node:
+                self.traverse_tree(element)
+
+        elif isinstance(node, str):
+            if node.isdigit() or node.replace('.', '', 1).isdigit():
+                self.code_p.append(f"PUSH {node}")
+            else:
+                self.code_p.append(f"LOAD {node}")
+
+
+class StackMachine:
+    def __init__(self):
+        self.stack = []
+        self.variables = {}
+        self.output = []
+
+    def execute(self, code_p):
+        pc = 0
+        labels = {line.split(':', 1)[0]: idx for idx, line in enumerate(code_p) if line.strip().endswith(':')}
+        while pc < len(code_p):
+            try:
+                instruction = code_p[pc]
+                parts = instruction.split()
+                command = parts[0]
+
+                print(f"Instrucción: {instruction}")
+                print(f"Pila antes: {self.stack}")
+                print(f"Variables: {self.variables}")
+
+                if command == "PUSH":
+                    self.stack.append(float(parts[1]) if '.' in parts[1] else int(parts[1]))
+
+                elif command == "LOAD":
+                    var_name = parts[1]
+                    if var_name not in self.variables:
+                        raise KeyError(f"Variable no inicializada: {var_name}")
+                    self.stack.append(self.variables[var_name])
+
+                elif command == "STORE":
+                    var_name = parts[1]
+                    if not self.stack:
+                        raise IndexError("Pila vacía durante operación STORE.")
+                    self.variables[var_name] = self.stack.pop()
+
+                elif command == "PRINT":
+                    if not self.stack:
+                        raise IndexError("Pila vacía durante operación PRINT.")
+                    self.output.append(self.stack.pop())
+
+                elif command in ("ADD", "SUB", "MUL", "DIV", "MOD"):
+                    if len(self.stack) < 2:
+                        raise IndexError(f"Pila insuficiente para operación {command}.")
+                    b = self.stack.pop()
+                    a = self.stack.pop()
+                    result = {
+                        "ADD": a + b,
+                        "SUB": a - b,
+                        "MUL": a * b,
+                        "DIV": a / b if b != 0 else 0,
+                        "MOD": a % b,
+                    }[command]
+                    self.stack.append(result)
+
+                elif command in ("GT", "LT", "GE", "LE", "EQ", "NE"):
+                    if len(self.stack) < 2:
+                        raise IndexError(f"Pila insuficiente para operación {command}.")
+                    b = self.stack.pop()
+                    a = self.stack.pop()
+                    result = {
+                        "GT": a > b,
+                        "LT": a < b,
+                        "GE": a >= b,
+                        "LE": a <= b,
+                        "EQ": a == b,
+                        "NE": a != b
+                    }[command]
+                    self.stack.append(1 if result else 0)
+
+                elif command == "JMP":
+                    if parts[1] not in labels:
+                        raise ValueError(f"Etiqueta no encontrada: {parts[1]}")
+                    pc = labels[parts[1]]
+                    continue
+
+                elif command == "JMPZ":
+                    if not self.stack:
+                        raise IndexError("Pila vacía durante operación JMPZ.")
+                    if not self.stack.pop():
+                        if parts[1] not in labels:
+                            raise ValueError(f"Etiqueta no encontrada: {parts[1]}")
+                        pc = labels[parts[1]]
+                        continue
+
+                elif instruction.endswith(":"):
+                    pass  # Etiquetas
+
+                else:
+                    raise ValueError(f"Instrucción desconocida: {command}")
+
+                print(f"Pila después: {self.stack}")
+                print(f"Salida: {self.output}")
+
+                pc += 1
+
+            except Exception as e:
+                print(f"Error en ejecución: {e}")
+                break
+
+        return self.output
+
+
 class Main(QMainWindow):
     def __init__(self):
         super(Main, self).__init__()
@@ -192,6 +404,7 @@ class Main(QMainWindow):
         
         self.show_syntax_tree(result)
         self.semantic_analize()
+        self.generate_and_execute_code()
     
     def semantic_analize(self):
         analyzer = SemanticAnalyzer()
@@ -261,6 +474,30 @@ class Main(QMainWindow):
         else:
             item = QStandardItem(str(element))
         return item
+
+    def generate_and_execute_code(self):
+        text = self.textCodigoFuente.toPlainText()
+        try:
+            syntax_tree = parser.parse(text)
+            if not syntax_tree:
+                raise ValueError("Árbol sintáctico no generado. Revisa el código fuente.")
+            print("Árbol Sintáctico:", syntax_tree)
+
+            # Generar código P
+            code_generator = CodeGenerator()
+            code_p = code_generator.generate_code(syntax_tree)
+
+            # Ejecutar código P
+            stack_machine = StackMachine()
+            result_output = stack_machine.execute(code_p)
+
+            # Mostrar resultados
+            self.tabCompilacion.findChild(QWidget, "tabCodigoP").findChild(QTextEdit, "txtCodigoP").setPlainText("\n".join(code_p))
+            self.tabCompilacion.findChild(QWidget, "tabResultados").findChild(QTextEdit, "txtResultados").setPlainText("\n".join(map(str, result_output)))
+
+        except Exception as e:
+            print(f"Error: {e}")
+
     
     def show_syntax_errors(self):
         global syntax_errors

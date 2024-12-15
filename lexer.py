@@ -100,9 +100,6 @@ def t_IDENTIFICADOR(t):
     r'[a-zA-Z_][a-zA-Z_0-9]*'
     t.type = reserved.get(t.value,'IDENTIFICADOR')
     if t.type == 'IDENTIFICADOR':
-        print(t.lexer.lineno)
-        print(t.value)
-        print(t.type)
         if not t.value in SemanticAnalyzer.return_symbol_table(SemanticAnalyzer):
             SemanticAnalyzer.add_to_temp_symbol_table(t.value, t.lexer.lineno)
     return t

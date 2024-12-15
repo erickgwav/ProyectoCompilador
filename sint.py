@@ -100,7 +100,7 @@ def p_repeticion(p):
     p[0] = ('do-until', p[2], p[4])
 
 def p_entrada(p):
-    'entrada : CIN identificador SEMICOLON'
+    'entrada : CIN IDENTIFICADOR SEMICOLON'
     p[0] = ('cin', p[2])
 
 def p_salida(p):
