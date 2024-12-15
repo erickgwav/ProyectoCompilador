@@ -1,6 +1,6 @@
 from PyQt5.QtCore import Qt, QStandardPaths
 from PyQt5.QtGui import QTextCharFormat, QColor, QTextCursor, QStandardItemModel, QStandardItem
-from PyQt5.QtWidgets import QMainWindow, QApplication, QFileDialog, QTextEdit, QPlainTextEdit, QHBoxLayout, QVBoxLayout, QSizePolicy, QWidget, QTreeView, QHeaderView
+from PyQt5.QtWidgets import QMainWindow, QApplication, QFileDialog, QTextEdit, QPlainTextEdit, QHBoxLayout, QVBoxLayout, QSizePolicy, QWidget, QTreeView, QHeaderView, QInputDialog
 from PyQt5.uic import loadUi
 import sys
 import os
@@ -84,8 +84,18 @@ class CodeGenerator:
                 self.code_p.append(f"JMPZ {label_start}")
 
             elif node_type == 'cout':
-                self.traverse_tree(node[1])
+                if isinstance(node[1], str) and node[1].startswith('"') and node[1].endswith('"'):
+                    # Es un literal de texto
+                    self.code_p.append(f'PUSH {node[1]}')
+                else:
+                    # Es una variable o expresión
+                    self.traverse_tree(node[1])
                 self.code_p.append("PRINT")
+
+            elif node_type == 'cin':
+                var_name = node[1]
+                self.code_p.append(f"CIN {var_name}")
+
 
             elif node_type == 'relacion':
                 # Relación como '>', '<', '==', etc.
@@ -132,6 +142,7 @@ class StackMachine:
         self.stack = []
         self.variables = {}
         self.output = []
+        self.errors = []
 
     def execute(self, code_p):
         pc = 0
@@ -147,7 +158,17 @@ class StackMachine:
                 print(f"Variables: {self.variables}")
 
                 if command == "PUSH":
-                    self.stack.append(float(parts[1]) if '.' in parts[1] else int(parts[1]))
+                    value = " ".join(parts[1:])
+                    if value.startswith('"') and value.endswith('"'):
+                        # Es una cadena de texto
+                        self.stack.append(value.strip('"'))
+                    elif value in self.variables:
+                        # Es una variable
+                        self.stack.append(self.variables[value])
+                    else:
+                        # Es un número
+                        self.stack.append(float(value) if '.' in value else int(value))
+
 
                 elif command == "LOAD":
                     var_name = parts[1]
@@ -164,7 +185,24 @@ class StackMachine:
                 elif command == "PRINT":
                     if not self.stack:
                         raise IndexError("Pila vacía durante operación PRINT.")
-                    self.output.append(self.stack.pop())
+                    value = self.stack.pop()
+                    if isinstance(value, (int, float)):
+                        self.output.append(str(value))
+                    else:
+                        self.output.append(value)
+
+                elif command == "CIN":
+                    print(f"Solicitando entrada para la variable '{parts[1]}'")
+                    var_name = parts[1]
+                    if hasattr(self, "input_callback"):
+                        input_value = self.input_callback(var_name)
+                        try:
+                            self.variables[var_name] = float(input_value) if '.' in input_value else int(input_value)
+                            print(f"Entrada recibida: {input_value}")
+                        except ValueError:
+                            raise ValueError(f"Entrada inválida para la variable '{var_name}': {input_value}")
+                    else:
+                        raise ValueError("No se configuró ningún callback para manejar la entrada.")
 
                 elif command in ("ADD", "SUB", "MUL", "DIV", "MOD"):
                     if len(self.stack) < 2:
@@ -222,7 +260,9 @@ class StackMachine:
                 pc += 1
 
             except Exception as e:
-                print(f"Error en ejecución: {e}")
+                error_message = f"Error en ejecución: {e}"
+                print(error_message)
+                self.errors.append(error_message)  # Agregar error a la lista
                 break
 
         return self.output
@@ -419,9 +459,7 @@ class Main(QMainWindow):
 
         model.appendRow(annotated_root)
 
-        scroll_position = self.tabCompilacion.findChild(QWidget, "tabHash").findChild(QTextEdit, "txtHash").verticalScrollBar().value()
         self.tabCompilacion.findChild(QWidget, "tabHash").findChild(QTextEdit, "txtHash").setHtml(analyzer.print_symbol_table())
-        self.tabCompilacion.findChild(QWidget, "tabHash").findChild(QTextEdit, "txtHash").verticalScrollBar().setValue(scroll_position)
         
         tree_view2.setModel(model)
         tree_view2.expandAll()
@@ -489,7 +527,15 @@ class Main(QMainWindow):
 
             # Ejecutar código P
             stack_machine = StackMachine()
+            stack_machine.input_callback = self.input_callback
             result_output = stack_machine.execute(code_p)
+
+            error_widget = self.tabErroresResultado.findChild(QWidget, "tabErroresEjecucion").findChild(QPlainTextEdit, "txtErroresEjecucion")
+            if stack_machine.errors:
+                errors = "\n".join(stack_machine.errors)
+                error_widget.setPlainText(errors)
+            else:
+                error_widget.setPlainText("Sin errores en ejecución.")
 
             # Mostrar resultados
             self.tabCompilacion.findChild(QWidget, "tabCodigoP").findChild(QTextEdit, "txtCodigoP").setPlainText("\n".join(code_p))
@@ -497,6 +543,14 @@ class Main(QMainWindow):
 
         except Exception as e:
             print(f"Error: {e}")
+
+    def input_callback(self, var_name):
+        # Muestra un mensaje en txtResultados pidiendo un valor
+        value, ok = QInputDialog.getText(self, "Entrada requerida", f"Ingrese un valor para '{var_name}':")
+        if ok:
+            return value
+        else:
+            raise ValueError(f"Se canceló la entrada para la variable '{var_name}'")
 
     
     def show_syntax_errors(self):

@@ -53,7 +53,8 @@ tokens = [
     'NOTEQUALS',
     'AND',
     'OR',
-    'SEMICOLON'
+    'SEMICOLON',
+    'STRING'
 ] + list(reserved.values())
 
 states = (
@@ -90,6 +91,7 @@ t_NOTEQUALS = r'!='
 t_AND = r'and'
 t_OR = r'or'
 t_SEMICOLON = r';'
+t_STRING = r'\"[^\"]*\"'
 
 def t_COMENTARIO(t):
     r'(\°\*(.|\n)*?\*\°)|(\°.*)'

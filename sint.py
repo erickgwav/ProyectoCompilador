@@ -104,8 +104,12 @@ def p_entrada(p):
     p[0] = ('cin', p[2])
 
 def p_salida(p):
-    'salida : COUT expresion SEMICOLON'
-    p[0] = ('cout', p[2])
+    '''salida : COUT expresion SEMICOLON
+              | COUT STRING SEMICOLON'''
+    if len(p) == 4 and isinstance(p[2], str) and p[2].startswith('"') and p[2].endswith('"'):
+        p[0] = ('cout', p[2])  # Literal de texto
+    else:
+        p[0] = ('cout', p[2])  # Variable o expresión
 
 def p_expresion(p):
     '''expresion : expresion operador_comparacion expresion_comparacion

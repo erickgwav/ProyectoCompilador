@@ -27,7 +27,7 @@
      </rect>
     </property>
     <property name="currentIndex">
-     <number>2</number>
+     <number>3</number>
     </property>
     <widget class="QWidget" name="tabErrorLexico">
      <attribute name="title">
@@ -80,6 +80,23 @@
       </item>
      </layout>
     </widget>
+    <widget class="QWidget" name="tabErroresEjecucion">
+     <attribute name="title">
+      <string>Errores en ejecución</string>
+     </attribute>
+     <layout class="QVBoxLayout" name="verticalLayout_6">
+      <item>
+       <widget class="QPlainTextEdit" name="txtErroresEjecucion">
+        <property name="readOnly">
+         <bool>true</bool>
+        </property>
+        <property name="plainText">
+         <string/>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </widget>
    </widget>
    <widget class="QTabWidget" name="tabCompilacion">
     <property name="geometry">
@@ -91,7 +108,7 @@
      </rect>
     </property>
     <property name="currentIndex">
-     <number>2</number>
+     <number>5</number>
     </property>
     <widget class="QWidget" name="tabLexico">
      <attribute name="title">

@@ -33,14 +33,15 @@ class SemanticAnalyzer:
         variables = declaration[1]
         annotated_vars = []
         for var in variables:
-            annotated_vars.append((var, f'tipo={var_type}', 'valor=ninguno'))
             if var in symbol_table:
                 self.errors.append(f"Error: '{var}' ya se ha declarado")
                 return (var, 'Error')
             else:
-                if var in temp_sym_table:
-                    self.add_to_symbol_table(var, var_type, None, temp_sym_table.get(var)["lineno"])
+                default_value = 0 if var_type == 'int' else 0.0
+                self.add_to_symbol_table(var, var_type, default_value, temp_sym_table.get(var)["lineno"])
+                annotated_vars.append((var, f'tipo={var_type}', f'valor={default_value}'))
         return (var_type, annotated_vars)
+
 
     def process_assignment(self, assignment):
         var_name = assignment[1]
@@ -155,6 +156,9 @@ class SemanticAnalyzer:
             return self.evaluate_expression(first_term, var_type, False) != self.evaluate_expression(second_term, var_type, False)
 
     def evaluate_expression(self, expr, var_type, is_assign):
+        if expr is None:
+            self.errors.append("Error: expresión no válida (valor es None).")
+            return None
         isNotInTable = symbol_table.get(expr) is None
         if isinstance(expr, tuple):
             value_1 = self.evaluate_expression(expr[1], var_type, False)
@@ -287,7 +291,11 @@ class SemanticAnalyzer:
                 else:
                     return (expr[0] + f' valor={result}', result, value_1, value_2, f'tipo={res_type}')
         elif not isNotInTable:
-            return self.evaluate_expression(symbol_table.get(expr)["value"], symbol_table.get(expr)["type"], False)
+            variable = symbol_table.get(expr)
+            if variable is None or variable["value"] is None:
+                self.errors.append(f"Error: la variable '{expr}' no tiene un valor asignado.")
+                return None
+            return self.evaluate_expression(variable["value"], variable["type"], False)
         else:
             if is_assign:
                 if var_type == 'double':
